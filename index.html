@@ -1442,7 +1442,7 @@
       const mood = getMoodClass(dateStr);
       cell.className = `week-cell${dateStr === todayStr ? ' today-cell' : ''}${isFuture ? ' future' : ''}`;
       if (mood) cell.classList.add(mood);
-      else if (isPast) cell.classList.add('past-empty-week');
+      else if (isPast || dateStr === todayStr) cell.classList.add('past-empty-week');
       cell.textContent = d.getDate();
       if (!isFuture) cell.onclick = () => { if (dateStr !== todayStr) openModal(dateStr); };
       col.appendChild(cell); scrollRow.appendChild(col);
@@ -1470,7 +1470,7 @@
       const mood = getMoodClass(dateStr);
       cell.className = `week-cell${dateStr === todayStr ? ' today-cell' : ''}${isFuture ? ' future' : ''}`;
       if (mood) cell.classList.add(mood);
-      else if (isPast) cell.classList.add('past-empty-week');
+      else if (isPast || dateStr === todayStr) cell.classList.add('past-empty-week');
       cell.style.cssText = 'width:31px;height:31px;font-size:9px;';
       if (!isFuture) {
         const entry = moodData[dateStr];
