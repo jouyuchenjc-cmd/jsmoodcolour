@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Colour of Your Day.</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sulphur+Point:wght@300;400;700&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+
+    :root {
+      --happy: #F6CE83;
+      --mixed: #D39266;
+      --happy-light: #FBE8C0;
+      --sad: #C06145;
+      --sad-light: #E8B09A;
+      --neutral: #9F9F9F;
+      --neutral-light: #D8D8D8;
+      --empty: #DCE5EF;
+      --bg: #F3EEE8;
+      --paper: #4D586F;
+      --ink: #4D586F;
+      --ink-light: #8E97A8;
+      --border: #3d4759;
+      --btn-bg: #4D586F;
+      --btn-text: #DCE5EF;
+      --card-bg: #FAF6F1;
+      --past-empty: #DCE5EF;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Noto Sans JP', 'PingFang TC', 'Apple SD Gothic Neo', sans-serif;
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(77,88,111,0.04) 28px),
+        repeating-linear-gradient(90deg, transparent, transparent 27px, rgba(77,88,111,0.04) 28px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      margin-bottom: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 1px solid rgba(77,88,111,0.2);
+      padding-bottom: 20px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      color: var(--ink-light);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 12px;
+      color: var(--ink-light);
+      letter-spacing: 0.06em;
+    }
+
+    .legend-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Notion 狀態列 */
+    .notion-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+    }
+
+    .notion-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ccc;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .notion-dot.connected { background: #7BC67E; }
+    .notion-dot.error { background: var(--sad); }
+    .notion-dot.syncing {
+      background: var(--mixed);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .notion-status-text {
+      color: var(--ink-light);
+    }
+
+    .notion-settings-btn {
+      background: none;
+      border: 1px solid rgba(77,88,111,0.25);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 10px;
+      color: var(--ink-light);
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.15s;
+    }
+    .notion-settings-btn:hover {
+      border-color: var(--ink);
+      color: var(--ink);
+    }
+
+    .view-tabs {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 24px;
+      background: rgba(77,88,111,0.15);
+      padding: 3px;
+      border-radius: 8px;
+      width: fit-content;
+    }
+
+    .tab {
+      padding: 6px 16px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      border: none;
+      background: transparent;
+      color: var(--ink-light);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: var(--card-bg);
+      color: var(--ink);
+      box-shadow: 0 1px 3px rgba(77,88,111,0.15);
+    }
+
+    .grid-section {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .grid-label {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin-bottom: 14px;
+    }
+
+    .grid { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .cell {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(220,229,239,0.25);
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .cell:hover {
+      transform: scale(1.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 10;
+    }
+
+    .cell.past-empty { background: rgba(220,229,239,0.5); }
+    .cell.happy { background: var(--happy); }
+    .cell.sad { background: var(--sad); }
+    .cell.mixed { background: var(--mixed); }
+    .cell.neutral { background: var(--neutral); }
+    .cell.today { border-color: #DCE5EF; }
+    .cell.future { background: rgba(220,229,239,0.5); cursor: default; }
+
+    .cell-tooltip {
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2a3244;
+      color: #DCE5EF;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 100;
+      letter-spacing: 0.04em;
+    }
+
+    .cell:hover .cell-tooltip { opacity: 1; }
+    .week-cell:hover .cell-tooltip { opacity: 1; }
+
+    .month-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+
+    .month-row-label {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 9px;
+      color: rgba(220,229,239,0.5);
+      text-align: center;
+      letter-spacing: 0.04em;
+      width: 28px;
+      flex-shrink: 0;
+      line-height: 28px;
+    }
+
+    .week-day-label {
+      width: 44px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 9px;
+      color: #ffffff;
+      text-align: center;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .week-cell {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(220,229,239,0.25);
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s;
+      position: relative;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      color: rgba(220,229,239,0.5);
+    }
+
+    .week-cell.happy { background: var(--happy); color: rgba(77,88,111,0.7); }
+    .week-cell.sad { background: var(--sad); color: rgba(255,255,255,0.8); }
+    .week-cell.mixed { background: var(--mixed); color: rgba(255,255,255,0.8); }
+    .week-cell.neutral { background: var(--neutral); color: rgba(255,255,255,0.8); }
+    .week-cell.past-empty-week { background: rgba(220,229,239,0.5); }
+    .week-cell.today-cell { border-color: #DCE5EF; border-width: 2px; }
+    .week-cell.future { background: rgba(220,229,239,0.5); cursor: default; }
+
+    /* 設定 Panel */
+    .settings-panel {
+      background: var(--card-bg);
+      border: 1px solid #E0D9D0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .settings-panel.show { display: block; }
+
+    .settings-title {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+
+    .settings-field label {
+      display: block;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      margin-bottom: 5px;
+    }
+
+    .settings-field input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1.5px solid #E0D9D0;
+      border-radius: 8px;
+      background: var(--bg);
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 12px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+      letter-spacing: 0.04em;
+    }
+    .settings-field input:focus { border-color: var(--ink-light); }
+    .settings-field input::placeholder { color: var(--ink-light); font-size: 11px; }
+
+    .settings-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .settings-save-btn {
+      padding: 8px 20px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: none;
+      border-radius: 30px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .settings-save-btn:hover { opacity: 0.85; }
+
+    .settings-test-btn {
+      padding: 8px 20px;
+      background: transparent;
+      color: var(--ink);
+      border: 1.5px solid #E0D9D0;
+      border-radius: 30px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .settings-test-btn:hover { border-color: var(--ink); }
+
+    .settings-sync-btn {
+      padding: 8px 20px;
+      background: transparent;
+      color: var(--ink);
+      border: 1.5px solid #E0D9D0;
+      border-radius: 30px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .settings-sync-btn:hover { border-color: var(--ink); }
+
+    .settings-msg {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      color: var(--ink-light);
+      letter-spacing: 0.04em;
+    }
+
+    .settings-note {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: rgba(77,88,111,0.05);
+      border-radius: 6px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 10px;
+      color: var(--ink-light);
+      letter-spacing: 0.04em;
+      line-height: 1.7;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 28px;
+      width: 340px;
+      max-width: 90vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      transform: translateY(8px);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.show .modal { transform: translateY(0); }
+
+    .modal-date {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      color: var(--ink);
+      margin-bottom: 18px;
+      font-weight: 400;
+    }
+
+    .modal-moods {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .modal-mood-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: 1.5px solid #E0D9D0;
+      border-radius: 30px;
+      background: var(--bg);
+      cursor: pointer;
+      font-family: 'Noto Sans JP', 'PingFang TC', sans-serif;
+      font-size: 12px;
+      color: var(--ink);
+      transition: all 0.15s;
+    }
+
+    .modal-mood-btn.sel-happy { background: var(--happy-light); border-color: var(--happy); }
+    .modal-mood-btn.sel-mixed { background: rgba(193,126,79,0.12); border-color: var(--mixed); }
+    .modal-mood-btn.sel-sad { background: var(--sad-light); border-color: var(--sad); }
+    .modal-mood-btn.sel-neutral { background: var(--neutral-light); border-color: var(--neutral); }
+
+    .modal-swatch { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+
+    .modal textarea {
+      width: 100%;
+      min-height: 60px;
+      padding: 10px 12px;
+      border: 1.5px solid #E0D9D0;
+      border-radius: 8px;
+      background: var(--bg);
+      font-family: 'Noto Sans JP', 'PingFang TC', sans-serif;
+      font-size: 12px;
+      color: var(--ink);
+      resize: vertical;
+      outline: none;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .modal-clear {
+      background: transparent;
+      border: none;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      color: var(--ink);
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      padding: 4px 0;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .modal-clear:hover { color: #C06145; }
+
+    .modal-cancel {
+      padding: 8px 18px;
+      border: 1.5px solid #E0D9D0;
+      border-radius: 30px;
+      background: transparent;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--ink-light);
+      cursor: pointer;
+    }
+
+    .modal-save {
+      padding: 8px 18px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: none;
+      border-radius: 30px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+    }
+
+    /* Notion sync indicator in modal */
+    .modal-notion-hint {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 10px;
+      color: var(--ink-light);
+      letter-spacing: 0.04em;
+      flex: 1;
+    }
+
+    /* 打卡區 */
+    .checkin-card {
+      background: var(--card-bg);
+      border: 1px solid #E0D9D0;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(77,88,111,0.06);
+    }
+
+    .checkin-title {
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--ink);
+    }
+
+    .today-date {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      color: var(--ink-light);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .mood-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .mood-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: 1.5px solid #E0D9D0;
+      border-radius: 30px;
+      background: var(--bg);
+      cursor: pointer;
+      font-family: 'Noto Sans JP', 'PingFang TC', sans-serif;
+      font-size: 13px;
+      color: var(--ink);
+      transition: all 0.18s;
+    }
+
+    .mood-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(77,88,111,0.12); }
+    .mood-btn.selected-happy { background: var(--happy-light); border-color: var(--happy); }
+    .mood-btn.selected-sad { background: var(--sad-light); border-color: var(--sad); }
+    .mood-btn.selected-mixed { background: rgba(193,126,79,0.15); border-color: var(--mixed); }
+    .mood-btn.selected-neutral { background: var(--neutral-light); border-color: var(--neutral); }
+
+    .mood-swatch { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+
+    textarea {
+      width: 100%;
+      min-height: 72px;
+      padding: 12px 14px;
+      border: 1.5px solid #E0D9D0;
+      border-radius: 10px;
+      background: var(--bg);
+      font-size: 13px;
+      font-family: 'Noto Sans JP', 'PingFang TC', sans-serif;
+      color: var(--ink);
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+
+    textarea:focus { border-color: var(--ink-light); }
+    textarea::placeholder { color: var(--ink-light); font-size: 12px; }
+
+    .save-btn {
+      padding: 10px 26px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: none;
+      border-radius: 30px;
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .save-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    .save-msg {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 11px;
+      color: var(--ink-light);
+      margin-left: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      letter-spacing: 0.06em;
+    }
+    .save-msg.show { opacity: 1; }
+
+    .stats-bar {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(220,229,239,0.2);
+    }
+
+    .month-section-label {
+      font-family: 'Sulphur Point', sans-serif;
+      font-size: 10px;
+      color: #ffffff;
+      margin-bottom: 5px;
+      margin-top: 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* Confirm dialog */
+    #confirmOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 600px) {
+      .cell { width: 22px; height: 22px; }
+      .month-row-label { width: 22px; font-size: 8px; }
+      header { flex-direction: column; align-items: flex-start; }
+      h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div>
+      <h1>The Colour of Your Day.</h1>
+      <div class="subtitle" id="currentYear"></div>
+    </div>
+    <div class="header-right">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--happy)"></div>開心</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--mixed)"></div>各半</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--sad)"></div>不開心</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--neutral)"></div>沒感覺</div>
+      </div>
+      <div class="notion-status-bar">
+        <div class="notion-dot" id="notionDot"></div>
+        <span class="notion-status-text" id="notionStatusText">Notion 未設定</span>
+        <button class="notion-settings-btn" onclick="toggleSettings()">⚙ 設定</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notion 設定 Panel -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-title">
+      <span>⚙</span> Notion 設定
+    </div>
+    <div class="settings-grid">
+      <div class="settings-field">
+        <label>Notion API Key</label>
+        <input type="password" id="notionApiKey" placeholder="secret_xxxxxxxxxxxx" />
+      </div>
+      <div class="settings-field">
+        <label>Database ID</label>
+        <input type="text" id="notionDbId" placeholder="31d85e19d1c68004bc9fd994f2c9e164" />
+      </div>
+    </div>
+    <div class="settings-actions">
+      <button class="settings-save-btn" onclick="saveSettings()">儲存設定</button>
+      <button class="settings-test-btn" onclick="testConnection()">測試連線</button>
+      <button class="settings-sync-btn" onclick="syncFromNotion()">⇄ 從 Notion 同步</button>
+      <button class="settings-sync-btn" onclick="pushAllToNotion()">↑ 推送全部到 Notion</button>
+      <span class="settings-msg" id="settingsMsg"></span>
+    </div>
+    <div class="settings-note">
+      ① 前往 notion.so/my-integrations 建立 Integration，複製 API Key<br>
+      ② 在 Notion 資料庫頁面右上角 → ··· → 連結至整合<br>
+      ③ 資料庫欄位需包含：<strong>Date</strong>（日期）、<strong>Mood</strong>（選擇）、<strong>Note</strong>（文字）、<strong>Name</strong>（標題）<br>
+      ④ API Key 只儲存在你的瀏覽器 localStorage，不會上傳到任何伺服器
+    </div>
+  </div>
+
+  <div class="view-tabs">
+    <button class="tab" onclick="switchView('week')">本週</button>
+    <button class="tab active" onclick="switchView('month')">本月</button>
+    <button class="tab" onclick="switchView('quarter')">本季</button>
+    <button class="tab" onclick="switchView('year')">今年</button>
+  </div>
+
+  <div class="grid-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="grid-label" id="gridLabel" style="margin-bottom:0;"></div>
+      <div id="viewNav" style="display:flex;align-items:center;gap:8px;">
+        <button onclick="navPrev()" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink);padding:0;font-family:Sulphur Point,sans-serif;">←</button>
+        <span id="navLabel" style="font-family:Sulphur Point,sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.06em;min-width:60px;text-align:center;"></span>
+        <button onclick="navNext()" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink);padding:0;font-family:Sulphur Point,sans-serif;">→</button>
+      </div>
+    </div>
+    <div id="gridContainer"></div>
+    <div class="stats-bar" id="statsBar"></div>
+  </div>
+
+  <!-- 紀錄列表 -->
+  <div style="margin-top:50px;margin-bottom:0;padding-left:30px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <button onclick="toggleLog()" id="logToggleBtn" style="background:none;border:none;cursor:pointer;font-family:Sulphur Point,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);text-decoration:underline;text-underline-offset:3px;padding:0;">Your Recent Life Note</button>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button onclick="exportData()" style="background:none;border:none;cursor:pointer;font-family:Sulphur Point,sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.06em;padding:0;text-decoration:underline;text-underline-offset:2px;">匯出</button>
+        <button onclick="importData()" style="background:none;border:none;cursor:pointer;font-family:Sulphur Point,sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.06em;padding:0;text-decoration:underline;text-underline-offset:2px;">匯入</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="handleImport(event)">
+        <span id="logToggleArrow" style="font-size:16px;color:var(--ink);font-weight:700;font-family:monospace;line-height:1;">−</span>
+      </div>
+    </div>
+    <div id="logList" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;"></div>
+  </div>
+
+  <div class="checkin-card" style="margin-top:50px;">
+    <div class="checkin-title">
+      What about today?
+      <span class="today-date" id="todayLabel"></span>
+    </div>
+    <div class="mood-buttons">
+      <button class="mood-btn" id="btn-happy" onclick="selectMood('happy')">
+        <div class="mood-swatch" style="background:var(--happy)"></div>開心
+      </button>
+      <button class="mood-btn" id="btn-mixed" onclick="selectMood('mixed')">
+        <div class="mood-swatch" style="background:var(--mixed)"></div>各半
+      </button>
+      <button class="mood-btn" id="btn-sad" onclick="selectMood('sad')">
+        <div class="mood-swatch" style="background:var(--sad)"></div>不開心
+      </button>
+      <button class="mood-btn" id="btn-neutral" onclick="selectMood('neutral')">
+        <div class="mood-swatch" style="background:var(--neutral)"></div>沒感覺
+      </button>
+    </div>
+    <textarea id="noteInput" placeholder="備注：今天發生了什麼？（可以不填）"></textarea>
+    <div style="display:flex;align-items:center">
+      <button class="save-btn" onclick="saveToday()">記錄今天</button>
+      <span class="save-msg" id="saveMsg">已儲存 ✓</span>
+    </div>
+  </div>
+</div>
+
+<!-- 補填 Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-date" id="modalDate"></div>
+      <button class="modal-clear" onclick="clearModal()">清除紀錄</button>
+    </div>
+    <div class="modal-title">補填這天的心情</div>
+    <hr style="border:none;border-top:1px solid rgba(77,88,111,0.15);margin:12px 0;">
+    <div class="modal-moods">
+      <button class="modal-mood-btn" id="mbtn-happy" onclick="selectModalMood('happy')">
+        <div class="modal-swatch" style="background:var(--happy)"></div>開心
+      </button>
+      <button class="modal-mood-btn" id="mbtn-mixed" onclick="selectModalMood('mixed')">
+        <div class="modal-swatch" style="background:var(--mixed)"></div>各半
+      </button>
+      <button class="modal-mood-btn" id="mbtn-sad" onclick="selectModalMood('sad')">
+        <div class="modal-swatch" style="background:var(--sad)"></div>不開心
+      </button>
+      <button class="modal-mood-btn" id="mbtn-neutral" onclick="selectModalMood('neutral')">
+        <div class="modal-swatch" style="background:var(--neutral)"></div>沒感覺
+      </button>
+    </div>
+    <textarea id="modalNote" placeholder="備注（可以不填）" style="font-size:16px;"></textarea>
+    <hr style="border:none;border-top:1px solid rgba(77,88,111,0.15);margin:12px 0;">
+    <div class="modal-actions">
+      <span class="modal-notion-hint" id="modalNotionHint"></span>
+      <button class="modal-cancel" onclick="closeModalDirect()">取消</button>
+      <button class="modal-save" onclick="saveModal()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 自訂確認對話框 -->
+<div id="confirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:#F3EEE8;border-radius:16px;padding:24px;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+    <div id="confirmMsg" style="font-family:Noto Sans JP,PingFang TC,sans-serif;font-size:13px;color:#4D586F;line-height:1.7;margin-bottom:20px;white-space:pre-line;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button id="confirmCancel" style="padding:8px 20px;border:1.5px solid #E0D9D0;border-radius:30px;background:#F3EEE8;font-family:Sulphur Point,sans-serif;font-size:13px;color:#4D586F;cursor:pointer;">取消</button>
+      <button id="confirmOk" style="padding:8px 20px;border:none;border-radius:30px;background:#4D586F;font-family:Sulphur Point,sans-serif;font-size:13px;color:#DCE5EF;cursor:pointer;">確定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'mood_grid_data_v2';
+  const SETTINGS_KEY = 'mood_grid_notion_settings';
+  // 每個 Notion page 的對應快取：dateStr → notion_page_id
+  const NOTION_PAGE_CACHE_KEY = 'mood_grid_notion_page_cache';
+
+  let moodData = {};
+  let notionPageCache = {}; // dateStr → notion_page_id
+  let selectedMood = null;
+  let modalMood = null;
+  let modalDate = null;
+  let currentView = 'month';
+  let viewOffset = 0;
+  let logOpen = true;
+  let notionSettings = { apiKey: '', dbId: '' };
+
+  // ── 本地儲存 ──
+  function loadData() {
+    try { const r = localStorage.getItem(STORAGE_KEY); if (r) moodData = JSON.parse(r); } catch(e) { moodData = {}; }
+    try { const r = localStorage.getItem(SETTINGS_KEY); if (r) notionSettings = JSON.parse(r); } catch(e) {}
+    try { const r = localStorage.getItem(NOTION_PAGE_CACHE_KEY); if (r) notionPageCache = JSON.parse(r); } catch(e) {}
+  }
+
+  function saveData() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(moodData)); } catch(e) {}
+  }
+
+  function savePageCache() {
+    try { localStorage.setItem(NOTION_PAGE_CACHE_KEY, JSON.stringify(notionPageCache)); } catch(e) {}
+  }
+
+  function formatDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function formatDisplay(dateStr) {
+    const [y,m,d] = dateStr.split('-');
+    return `${m}/${d}`;
+  }
+
+  const today = new Date();
+  const todayStr = formatDate(today);
+
+  // ── Notion API（透過 cors proxy）──
+  // Notion API 不允許直接從瀏覽器呼叫（CORS），需要 proxy
+  // 這裡使用 corsproxy.io 做中轉
+  const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/v1';
+  const NOTION_API = 'https://api.notion.com/v1';
+  const NOTION_VERSION = '2022-06-28';
+
+  function notionHeaders() {
+    const key = (notionSettings.apiKey || '').replace(/[^\x00-\x7F]/g, '');
+    return {
+      'Authorization': 'Bearer ' + key,
+      'Notion-Version': NOTION_VERSION,
+      'Content-Type': 'application/json',
+    };
+  }
+
+  async function notionRequest(method, path, body) {
+    const url = `${NOTION_PROXY}${path}`;
+    const opts = {
+      method,
+      headers: notionHeaders(),
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(url, opts);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || `Notion API error ${res.status}`);
+    return json;
+  }
+
+  // ── 設定 ──
+  function toggleSettings() {
+    const panel = document.getElementById('settingsPanel');
+    panel.classList.toggle('show');
+    if (panel.classList.contains('show')) {
+      document.getElementById('notionApiKey').value = notionSettings.apiKey || '';
+      document.getElementById('notionDbId').value = notionSettings.dbId || '';
+    }
+  }
+
+  function saveSettings() {
+    notionSettings.apiKey = document.getElementById('notionApiKey').value.trim();
+    notionSettings.dbId = document.getElementById('notionDbId').value.trim();
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(notionSettings)); } catch(e) {}
+    setSettingsMsg('已儲存 ✓', false);
+    updateNotionStatus('idle');
+  }
+
+  function setSettingsMsg(msg, isError) {
+    const el = document.getElementById('settingsMsg');
+    el.textContent = msg;
+    el.style.color = isError ? 'var(--sad)' : 'var(--ink-light)';
+    if (!isError) setTimeout(() => { el.textContent = ''; }, 3000);
+  }
+
+  async function testConnection() {
+    if (!notionSettings.apiKey || !notionSettings.dbId) {
+      setSettingsMsg('請先填入 API Key 和 Database ID', true); return;
+    }
+    setSettingsMsg('測試中...', false);
+    updateNotionStatus('syncing');
+    try {
+      const db = await notionRequest('GET', `/databases/${notionSettings.dbId}`);
+      setSettingsMsg(`✓ 連線成功！資料庫：${db.title?.[0]?.plain_text || '無標題'}`, false);
+      updateNotionStatus('connected');
+    } catch(e) {
+      setSettingsMsg(`✗ 失敗：${e.message}`, true);
+      updateNotionStatus('error');
+    }
+  }
+
+  function updateNotionStatus(state) {
+    const dot = document.getElementById('notionDot');
+    const txt = document.getElementById('notionStatusText');
+    dot.className = 'notion-dot';
+    if (state === 'connected') { dot.classList.add('connected'); txt.textContent = 'Notion 已連線'; }
+    else if (state === 'syncing') { dot.classList.add('syncing'); txt.textContent = '同步中...'; }
+    else if (state === 'error') { dot.classList.add('error'); txt.textContent = 'Notion 連線失敗'; }
+    else {
+      txt.textContent = notionSettings.apiKey ? 'Notion 已設定' : 'Notion 未設定';
+      if (notionSettings.apiKey) dot.classList.add('connected');
+    }
+  }
+
+  // ── 寫入 Notion ──
+  async function writeToNotion(dateStr, mood, note) {
+    if (!notionSettings.apiKey || !notionSettings.dbId) return;
+    updateNotionStatus('syncing');
+
+    const moodMap = { happy: '開心', mixed: '各半', sad: '不開心', neutral: '沒感覺' };
+    const properties = {
+      'Name': { title: [{ text: { content: `${dateStr} · ${moodMap[mood]}` } }] },
+      'Date': { date: { start: (dateStr && String(dateStr).match(/^\d{4}-\d{2}-\d{2}$/) ? String(dateStr) : null) } },
+      'Mood': { select: { name: moodMap[mood] } },
+      'Note': { rich_text: [{ text: { content: note || '' } }] },
+    };
+
+    try {
+      const existingPageId = notionPageCache[dateStr];
+      if (existingPageId) {
+        // 更新既有 page
+        await notionRequest('PATCH', `/pages/${existingPageId}`, { properties });
+      } else {
+        // 先查找是否有同日期的 page
+        const existing = await queryNotionByDate(dateStr);
+        if (existing) {
+          notionPageCache[dateStr] = existing.id;
+          savePageCache();
+          await notionRequest('PATCH', `/pages/${existing.id}`, { properties });
+        } else {
+          // 新建
+          const page = await notionRequest('POST', '/pages', {
+            parent: { database_id: notionSettings.dbId },
+            properties,
+          });
+          notionPageCache[dateStr] = page.id;
+          savePageCache();
+        }
+      }
+      updateNotionStatus('connected');
+    } catch(e) {
+      console.error('Notion write error:', e);
+      updateNotionStatus('error');
+    }
+  }
+
+  async function deleteFromNotion(dateStr) {
+    if (!notionSettings.apiKey || !notionSettings.dbId) return;
+    const pageId = notionPageCache[dateStr];
+    if (!pageId) {
+      // try to find
+      const existing = await queryNotionByDate(dateStr);
+      if (!existing) return;
+      notionPageCache[dateStr] = existing.id;
+    }
+    try {
+      await notionRequest('PATCH', `/pages/${notionPageCache[dateStr]}`, { archived: true });
+      delete notionPageCache[dateStr];
+      savePageCache();
+    } catch(e) {
+      console.error('Notion delete error:', e);
+    }
+  }
+
+  async function queryNotionByDate(dateStr) {
+    try {
+      const res = await notionRequest('POST', `/databases/${notionSettings.dbId}/query`, {
+        filter: { property: 'Date', date: { equals: dateStr } }
+      });
+      return res.results?.[0] || null;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  // ── 從 Notion 同步 ──
+  async function syncFromNotion() {
+    if (!notionSettings.apiKey || !notionSettings.dbId) {
+      setSettingsMsg('請先設定 API Key 和 Database ID', true); return;
+    }
+    setSettingsMsg('同步中...', false);
+    updateNotionStatus('syncing');
+
+    const moodMap = { '開心': 'happy', '各半': 'mixed', '不開心': 'sad', '沒感覺': 'neutral' };
+    let cursor = undefined;
+    let count = 0;
+
+    try {
+      do {
+        const body = { page_size: 100 };
+        if (cursor) body.start_cursor = cursor;
+        const res = await notionRequest('POST', `/databases/${notionSettings.dbId}/query`, body);
+
+        for (const page of res.results) {
+          const dateVal = page.properties?.Date?.date?.start;
+          const moodVal = page.properties?.Mood?.select?.name;
+          const noteVal = page.properties?.Note?.rich_text?.[0]?.plain_text || '';
+          if (dateVal && moodVal && moodMap[moodVal]) {
+            moodData[dateVal] = { mood: moodMap[moodVal], note: noteVal };
+            notionPageCache[dateVal] = page.id;
+            count++;
+          }
+        }
+
+        cursor = res.has_more ? res.next_cursor : undefined;
+      } while (cursor);
+
+      saveData();
+      savePageCache();
+      renderGrid();
+      renderLog();
+      updateNotionStatus('connected');
+      setSettingsMsg(`✓ 同步完成，共 ${count} 筆`, false);
+    } catch(e) {
+      setSettingsMsg(`✗ 同步失敗：${e.message}`, true);
+      updateNotionStatus('error');
+    }
+  }
+
+  // ── Header ──
+  function initHeader() {
+    document.getElementById('currentYear').textContent = `${today.getFullYear()}`;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    document.getElementById('todayLabel').textContent =
+      `${months[today.getMonth()]} ${String(today.getDate()).padStart(2,'0')}, ${today.getFullYear()}`;
+    updateNotionStatus('idle');
+  }
+
+  function loadTodayData() {
+    const entry = moodData[todayStr];
+    if (entry) { selectMoodUI(entry.mood); document.getElementById('noteInput').value = entry.note || ''; }
+  }
+
+  // ── 情緒選擇 ──
+  function selectMood(mood) { selectedMood = mood; selectMoodUI(mood); }
+  function selectMoodUI(mood) {
+    ['happy','mixed','sad','neutral'].forEach(m => {
+      document.getElementById(`btn-${m}`).className = `mood-btn${mood===m ? ` selected-${m}` : ''}`;
+    });
+    selectedMood = mood;
+  }
+
+  async function saveToday() {
+    if (!selectedMood) { alert('請先選擇今天的心情！'); return; }
+    const note = document.getElementById('noteInput').value.trim();
+    moodData[todayStr] = { mood: selectedMood, note };
+    saveData();
+    renderGrid();
+    renderLog();
+    const msg = document.getElementById('saveMsg');
+    msg.textContent = '儲存中...';
+    msg.classList.add('show');
+    await writeToNotion(todayStr, selectedMood, note);
+    msg.textContent = notionSettings.apiKey ? '已儲存 + 同步 Notion ✓' : '已儲存 ✓';
+    setTimeout(() => msg.classList.remove('show'), 2500);
+  }
+
+  // ── Modal ──
+  function openModal(dateStr) {
+    modalDate = dateStr;
+    modalMood = null;
+    const entry = moodData[dateStr];
+    document.getElementById('modalDate').textContent = formatDisplay(dateStr);
+    document.getElementById('modalNote').value = entry?.note || '';
+    document.getElementById('modalNotionHint').textContent = notionSettings.apiKey ? '· 會同步至 Notion' : '';
+    if (entry?.mood) selectModalMoodUI(entry.mood);
+    else ['happy','mixed','sad','neutral'].forEach(m => { document.getElementById(`mbtn-${m}`).className = 'modal-mood-btn'; });
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function closeModal(e) { if (e.target === document.getElementById('modalOverlay')) closeModalDirect(); }
+  function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('show'); modalDate = null; modalMood = null; }
+  function selectModalMood(mood) { modalMood = mood; selectModalMoodUI(mood); }
+  function selectModalMoodUI(mood) {
+    ['happy','mixed','sad','neutral'].forEach(m => {
+      document.getElementById(`mbtn-${m}`).className = `modal-mood-btn${mood===m ? ` sel-${m}` : ''}`;
+    });
+    modalMood = mood;
+  }
+
+  async function saveModal() {
+    if (!modalMood) { alert('請選擇心情！'); return; }
+    if (!modalDate) { alert('日期錯誤，請重新開啟'); return; }
+    const note = document.getElementById('modalNote').value.trim();
+    moodData[modalDate] = { mood: modalMood, note };
+    saveData();
+    renderGrid();
+    renderLog();
+    closeModalDirect();
+    await writeToNotion(modalDate, modalMood, note);
+  }
+
+  async function clearModal() {
+    if (!moodData[modalDate]) { closeModalDirect(); return; }
+    delete moodData[modalDate];
+    saveData();
+    renderGrid();
+    renderLog();
+    closeModalDirect();
+    await deleteFromNotion(modalDate);
+  }
+
+
+  // ── 推送所有本地資料到 Notion ──
+  async function pushAllToNotion() {
+    if (!notionSettings.apiKey || !notionSettings.dbId) {
+      setSettingsMsg('請先設定 API Key 和 Database ID', true); return;
+    }
+    const entries = Object.entries(moodData);
+    if (entries.length === 0) {
+      setSettingsMsg('沒有本地資料可推送', true); return;
+    }
+    setSettingsMsg(`推送中... 0/${entries.length}`, false);
+    updateNotionStatus('syncing');
+    let done = 0;
+    for (const [dateStr, entry] of entries) {
+      await writeToNotion(dateStr, entry.mood, entry.note || '');
+      done++;
+      setSettingsMsg(`推送中... ${done}/${entries.length}`, false);
+    }
+    updateNotionStatus('connected');
+    setSettingsMsg(`✓ 推送完成！共 ${entries.length} 筆`, false);
+  }
+
+  // ── Log ──
+  function renderLog() {
+    const list = document.getElementById('logList');
+    if (!list) return;
+    list.innerHTML = '';
+    const moodColors = { happy: '#F6CE83', mixed: '#D39266', sad: '#C06145', neutral: '#9F9F9F' };
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const realNow = new Date();
+    const ref = new Date(realNow);
+    if (currentView === 'week') ref.setDate(realNow.getDate() + viewOffset * 7);
+    else if (currentView === 'month') ref.setMonth(realNow.getMonth() + viewOffset);
+    else if (currentView === 'quarter') ref.setMonth(realNow.getMonth() + viewOffset * 3);
+    else ref.setFullYear(realNow.getFullYear() + viewOffset);
+    const now = ref > realNow ? realNow : ref;
+
+    let startStr, endStr;
+    if (currentView === 'week') {
+      const s = new Date(ref); s.setDate(ref.getDate() - ref.getDay());
+      startStr = formatDate(s); endStr = formatDate(now);
+    } else if (currentView === 'month') {
+      startStr = `${ref.getFullYear()}-${String(ref.getMonth()+1).padStart(2,'0')}-01`;
+      endStr = formatDate(now);
+    } else if (currentView === 'quarter') {
+      const qs = Math.floor(ref.getMonth()/3)*3;
+      startStr = `${ref.getFullYear()}-${String(qs+1).padStart(2,'0')}-01`;
+      endStr = formatDate(now);
+    } else {
+      startStr = `${ref.getFullYear()}-01-01`;
+      endStr = ref.getFullYear() === realNow.getFullYear() ? formatDate(realNow) : `${ref.getFullYear()}-12-31`;
+    }
+
+    const entries = Object.entries(moodData)
+      .filter(([d]) => d >= startStr && d <= endStr)
+      .sort((a, b) => b[0].localeCompare(a[0]));
+
+    if (entries.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'font-family:Sulphur Point,sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.06em;';
+      empty.textContent = 'No records yet';
+      list.appendChild(empty); return;
+    }
+
+    entries.forEach(([dateStr, entry]) => {
+      const [y, m, d] = dateStr.split('-');
+      const dateLabel = `${months[parseInt(m)-1]} ${d}, ${y}`;
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(77,88,111,0.08);';
+      const dot = document.createElement('div');
+      dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${moodColors[entry.mood]};flex-shrink:0;`;
+      const info = document.createElement('div');
+      info.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;';
+      const dateTxt = document.createElement('span');
+      dateTxt.style.cssText = 'font-family:Sulphur Point,sans-serif;font-size:11px;color:var(--ink);letter-spacing:0.04em;';
+      dateTxt.textContent = dateLabel;
+      info.appendChild(dateTxt);
+      if (entry.note) {
+        const note = document.createElement('div');
+        note.style.cssText = 'font-family:Noto Sans JP,PingFang TC,sans-serif;font-size:11px;color:var(--ink-light);';
+        note.textContent = entry.note;
+        info.appendChild(note);
+      }
+      // Notion 同步標記
+      if (notionPageCache[dateStr]) {
+        const syncBadge = document.createElement('div');
+        syncBadge.style.cssText = 'font-family:Sulphur Point,sans-serif;font-size:9px;color:var(--ink-light);letter-spacing:0.04em;flex-shrink:0;';
+        syncBadge.textContent = 'N↑';
+        syncBadge.title = '已同步至 Notion';
+        row.appendChild(dot); row.appendChild(info); row.appendChild(syncBadge);
+      } else {
+        row.appendChild(dot); row.appendChild(info);
+      }
+      list.appendChild(row);
+    });
+  }
+
+  function toggleLog() {
+    logOpen = !logOpen;
+    document.getElementById('logList').style.display = logOpen ? 'flex' : 'none';
+    document.getElementById('logToggleArrow').textContent = logOpen ? '−' : '+';
+  }
+
+  // ── Nav ──
+  function navPrev() { viewOffset--; renderGrid(); renderLog(); }
+  function navNext() { if (viewOffset < 0) { viewOffset++; renderGrid(); renderLog(); } }
+
+  function switchView(view) {
+    currentView = view;
+    viewOffset = 0;
+    document.querySelectorAll('.tab').forEach((t,i) => {
+      t.classList.toggle('active', ['week','month','quarter','year'][i] === view);
+    });
+    renderGrid();
+    renderLog();
+  }
+
+  // ── Export/Import ──
+  function showConfirm(msg, onOk, onCancel) {
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmMsg').textContent = msg;
+    overlay.style.display = 'flex';
+    const okBtn = document.getElementById('confirmOk');
+    const cancelBtn = document.getElementById('confirmCancel');
+    cancelBtn.style.display = '';
+    const cleanup = () => { overlay.style.display = 'none'; };
+    okBtn.onclick = () => { cleanup(); if (onOk) onOk(); };
+    cancelBtn.onclick = () => { cleanup(); if (onCancel) onCancel(); };
+  }
+
+  function exportData() {
+    const count = Object.keys(moodData).length;
+    if (count === 0) { showConfirm('還沒有任何紀錄可以匯出！', null, null); document.getElementById('confirmCancel').style.display='none'; return; }
+    const json = JSON.stringify(moodData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `mood-data-${formatDate(new Date())}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    showConfirm(`✅ 已匯出 ${count} 筆紀錄！`, null, null); document.getElementById('confirmCancel').style.display='none';
+  }
+
+  function importData() { document.getElementById('importFile').click(); }
+
+  function handleImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const imported = JSON.parse(evt.target.result);
+        const total = Object.keys(imported).length;
+        const conflicts = Object.keys(imported).filter(d => moodData[d]);
+        const newOnly = total - conflicts.length;
+        if (conflicts.length > 0) {
+          showConfirm(`匯入檔案共 ${total} 筆紀錄\n新增 ${newOnly} 筆（不衝突）\n衝突 ${conflicts.length} 筆（已有紀錄）\n\n確定 → 全部覆蓋\n取消 → 只匯入新的`,
+            () => { Object.assign(moodData, imported); saveData(); renderGrid(); renderLog(); showConfirm(`✅ 匯入完成！共覆蓋 ${total} 筆紀錄。`, null, null); document.getElementById('confirmCancel').style.display='none'; },
+            () => { Object.keys(imported).forEach(d => { if (!moodData[d]) moodData[d] = imported[d]; }); saveData(); renderGrid(); renderLog(); showConfirm(`✅ 匯入完成！新增 ${newOnly} 筆紀錄。`, null, null); document.getElementById('confirmCancel').style.display='none'; }
+          );
+        } else {
+          Object.assign(moodData, imported); saveData(); renderGrid(); renderLog();
+          showConfirm(`✅ 匯入完成！共新增 ${total} 筆紀錄。`, null, null); document.getElementById('confirmCancel').style.display='none';
+        }
+      } catch(err) {
+        showConfirm('匯入失敗，請確認是正確的 JSON 檔案。', null, null); document.getElementById('confirmCancel').style.display='none';
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  // ── Grid 渲染 ──
+  function getMoodClass(dateStr) { return moodData[dateStr]?.mood || ''; }
+
+  function renderGrid() {
+    const container = document.getElementById('gridContainer');
+    const label = document.getElementById('gridLabel');
+    const navLabel = document.getElementById('navLabel');
+    container.innerHTML = '';
+
+    const base = new Date();
+    const ref = new Date(base);
+    if (currentView === 'week') ref.setDate(base.getDate() + viewOffset * 7);
+    else if (currentView === 'month') ref.setMonth(base.getMonth() + viewOffset);
+    else if (currentView === 'quarter') ref.setMonth(base.getMonth() + viewOffset * 3);
+    else ref.setFullYear(base.getFullYear() + viewOffset);
+
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    if (currentView === 'week') {
+      const s = new Date(ref); s.setDate(ref.getDate() - ref.getDay());
+      const e = new Date(s); e.setDate(s.getDate() + 6);
+      navLabel.textContent = `${months[s.getMonth()]} ${s.getDate()}–${e.getDate()}`;
+    } else if (currentView === 'month') {
+      navLabel.textContent = `${months[ref.getMonth()]} ${ref.getFullYear()}`;
+    } else if (currentView === 'quarter') {
+      navLabel.textContent = `Q${Math.floor(ref.getMonth()/3)+1} ${ref.getFullYear()}`;
+    } else {
+      navLabel.textContent = `${ref.getFullYear()}`;
+    }
+
+    if (currentView === 'week') renderWeek(container, label, ref);
+    else if (currentView === 'month') renderMonth(container, label, ref);
+    else if (currentView === 'quarter') renderQuarter(container, label, ref);
+    else renderYear(container, label, ref);
+    renderStats(ref);
+  }
+
+  function renderWeek(container, label, ref) {
+    label.textContent = 'This Week';
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const startOfWeek = new Date(ref);
+    startOfWeek.setDate(ref.getDate() - ref.getDay());
+    const scrollRow = document.createElement('div');
+    scrollRow.style.cssText = 'display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startOfWeek); d.setDate(startOfWeek.getDate() + i);
+      const dateStr = formatDate(d);
+      const isFuture = d > today; const isPast = d < today;
+      const col = document.createElement('div');
+      col.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;';
+      const lbl = document.createElement('div');
+      lbl.className = 'week-day-label'; lbl.textContent = days[i];
+      col.appendChild(lbl);
+      const cell = document.createElement('div');
+      const mood = getMoodClass(dateStr);
+      cell.className = `week-cell${dateStr === todayStr ? ' today-cell' : ''}${isFuture ? ' future' : ''}`;
+      if (mood) cell.classList.add(mood);
+      else if (isPast) cell.classList.add('past-empty-week');
+      cell.textContent = d.getDate();
+      if (!isFuture) cell.onclick = () => { if (dateStr !== todayStr) openModal(dateStr); };
+      col.appendChild(cell); scrollRow.appendChild(col);
+    }
+    container.appendChild(scrollRow);
+  }
+
+  function renderMonth(container, label, ref) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    label.textContent = `${months[ref.getMonth()]} ${ref.getFullYear()}`;
+    const year = ref.getFullYear(), month = ref.getMonth();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d);
+      const dateStr = formatDate(date);
+      const isFuture = date > today; const isPast = date < today;
+      const col = document.createElement('div');
+      col.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;';
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'width:31px;font-family:Sulphur Point,sans-serif;font-size:8px;color:#ffffff;text-align:center;letter-spacing:0.04em;';
+      lbl.textContent = String(d).padStart(2,'0');
+      const cell = document.createElement('div');
+      const mood = getMoodClass(dateStr);
+      cell.className = `week-cell${dateStr === todayStr ? ' today-cell' : ''}${isFuture ? ' future' : ''}`;
+      if (mood) cell.classList.add(mood);
+      else if (isPast) cell.classList.add('past-empty-week');
+      cell.style.cssText = 'width:31px;height:31px;font-size:9px;';
+      if (!isFuture) {
+        const entry = moodData[dateStr];
+        const tip = document.createElement('div'); tip.className = 'cell-tooltip';
+        tip.textContent = `${formatDisplay(dateStr)}${entry?.note ? ' · ' + entry.note.slice(0,20) : (mood ? '' : ' 點擊補填')}`;
+        cell.appendChild(tip);
+        if (dateStr !== todayStr) cell.onclick = () => openModal(dateStr);
+      }
+      col.appendChild(lbl); col.appendChild(cell); wrap.appendChild(col);
+    }
+    container.appendChild(wrap);
+  }
+
+  function renderQuarter(container, label, ref) {
+    const quarterStart = Math.floor(ref.getMonth() / 3) * 3;
+    label.textContent = ['Q1','Q2','Q3','Q4'][Math.floor(ref.getMonth()/3)];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (let m = quarterStart; m < quarterStart + 3; m++) {
+      const ml = document.createElement('div'); ml.className = 'month-section-label'; ml.textContent = months[m];
+      container.appendChild(ml);
+      const grid = document.createElement('div'); grid.className = 'grid';
+      const daysInMonth = new Date(ref.getFullYear(), m+1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(ref.getFullYear(), m, d);
+        const dateStr = formatDate(date);
+        grid.appendChild(createCell(dateStr, date > today, date < today));
+      }
+      container.appendChild(grid);
+    }
+  }
+
+  function renderYear(container, label, ref) {
+    label.textContent = `${ref.getFullYear()}`;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (let m = 0; m < 12; m++) {
+      const ml = document.createElement('div'); ml.className = 'month-section-label'; ml.textContent = months[m];
+      container.appendChild(ml);
+      const grid = document.createElement('div'); grid.className = 'grid';
+      const daysInMonth = new Date(ref.getFullYear(), m+1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(ref.getFullYear(), m, d);
+        const dateStr = formatDate(date);
+        grid.appendChild(createCell(dateStr, date > today, date < today));
+      }
+      container.appendChild(grid);
+    }
+  }
+
+  function createCell(dateStr, isFuture, isPast) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    if (isFuture) { cell.classList.add('future'); return cell; }
+    if (dateStr === todayStr) cell.classList.add('today');
+    const mood = getMoodClass(dateStr);
+    if (mood) cell.classList.add(mood);
+    else if (isPast) cell.classList.add('past-empty');
+    const entry = moodData[dateStr];
+    const tip = document.createElement('div'); tip.className = 'cell-tooltip';
+    tip.textContent = `${formatDisplay(dateStr)}${entry?.note ? ' · ' + entry.note.slice(0,20) : (mood ? '' : ' 點擊補填')}`;
+    cell.appendChild(tip);
+    if (dateStr !== todayStr) cell.onclick = () => openModal(dateStr);
+    return cell;
+  }
+
+  function renderStats(ref) {
+    ref = ref || new Date();
+    const bar = document.getElementById('statsBar');
+    bar.innerHTML = '';
+    let counts = { happy: 0, mixed: 0, sad: 0, neutral: 0, total: 0 };
+    let start;
+    if (currentView === 'week') { start = new Date(ref); start.setDate(ref.getDate() - ref.getDay()); }
+    else if (currentView === 'month') { start = new Date(ref.getFullYear(), ref.getMonth(), 1); }
+    else if (currentView === 'quarter') { start = new Date(ref.getFullYear(), Math.floor(ref.getMonth()/3)*3, 1); }
+    else { start = new Date(ref.getFullYear(), 0, 1); }
+
+    const startStr = formatDate(start);
+    const realNow = new Date();
+    const nowStr = ref > realNow ? formatDate(realNow) : formatDate(ref);
+    Object.entries(moodData).forEach(([date, entry]) => {
+      if (date >= startStr && date <= nowStr) { counts[entry.mood]++; counts.total++; }
+    });
+
+    if (counts.total === 0) {
+      bar.innerHTML = '<div style="font-family:Sulphur Point,sans-serif;font-size:11px;color:rgba(220,229,239,0.4);letter-spacing:0.06em;">No records yet</div>';
+      return;
+    }
+
+    let totalDays = 0;
+    const cur = new Date(start);
+    const realToday = new Date();
+    const endBound = ref > realToday ? realToday : ref;
+    while (cur <= endBound) { totalDays++; cur.setDate(cur.getDate()+1); }
+    const unrecorded = totalDays - counts.total;
+
+    const allItems = [
+      { key: 'happy', label: '開心', color: '#F6CE83', count: counts.happy },
+      { key: 'mixed', label: '各半', color: '#D39266', count: counts.mixed },
+      { key: 'sad', label: '不開心', color: '#C06145', count: counts.sad },
+      { key: 'neutral', label: '沒感覺', color: '#9F9F9F', count: counts.neutral },
+      { key: 'unrecorded', label: '未記錄', color: '#DCE5EF', count: unrecorded }
+    ];
+
+    const boxesWrap = document.createElement('div');
+    boxesWrap.style.cssText = 'display:flex;gap:2px;margin-bottom:8px;flex-wrap:wrap;';
+    let assigned = allItems.map(({ count }) => Math.floor(count / totalDays * 10));
+    let remainder = 10 - assigned.reduce((a, b) => a + b, 0);
+    const fracs = allItems.map(({ count }, i) => count / totalDays * 10 - assigned[i]);
+    const sorted = fracs.map((f, i) => [f, i]).sort((a, b) => b[0] - a[0]);
+    for (let i = 0; i < remainder; i++) assigned[sorted[i][1]]++;
+    allItems.forEach(({ color }, idx) => {
+      for (let i = 0; i < assigned[idx]; i++) {
+        const box = document.createElement('div');
+        box.style.cssText = `width:14px;height:14px;border-radius:2px;background:${color};flex-shrink:0;`;
+        boxesWrap.appendChild(box);
+      }
+    });
+
+    const statsRow = document.createElement('div');
+    statsRow.style.cssText = 'display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;';
+    statsRow.appendChild(boxesWrap);
+    const legend = document.createElement('div');
+    legend.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;';
+    allItems.forEach(({ label, color, count }) => {
+      if (count <= 0) return;
+      const pct = Math.round(count / totalDays * 100);
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex;align-items:center;gap:4px;';
+      const dot = document.createElement('div');
+      dot.style.cssText = `width:7px;height:7px;border-radius:2px;background:${color};flex-shrink:0;`;
+      const txt = document.createElement('div');
+      txt.style.cssText = 'font-family:Sulphur Point,sans-serif;font-size:10px;color:rgba(220,229,239,0.55);letter-spacing:0.04em;white-space:nowrap;';
+      txt.innerHTML = `<span style="color:rgba(220,229,239,0.85)">${label}</span> ${count}天·${pct}%`;
+      item.appendChild(dot); item.appendChild(txt); legend.appendChild(item);
+    });
+    statsRow.appendChild(legend);
+    bar.appendChild(statsRow);
+  }
+
+  // ── Init ──
+  loadData();
+  initHeader();
+  loadTodayData();
+  renderGrid();
+  renderLog();
+</script>
+</body>
+</html>
