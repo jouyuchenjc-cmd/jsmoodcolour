@@ -1123,6 +1123,7 @@
       savePageCache();
       renderGrid();
       renderLog();
+      loadTodayData();
       updateNotionStatus('connected');
       setSettingsMsg(`✓ 同步完成，共 ${count} 筆`, false);
     } catch(e) {
@@ -1432,7 +1433,8 @@
     for (let i = 0; i < 7; i++) {
       const d = new Date(startOfWeek); d.setDate(startOfWeek.getDate() + i);
       const dateStr = formatDate(d);
-      const isFuture = d > today; const isPast = d < today;
+      const dMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const isFuture = dMidnight > today; const isPast = dMidnight < today;
       const col = document.createElement('div');
       col.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;';
       const lbl = document.createElement('div');
@@ -1615,6 +1617,14 @@
   loadTodayData();
   renderGrid();
   renderLog();
+  // 如果有設定 Notion，自動同步後重新渲染
+  if (notionSettings.apiKey && notionSettings.dbId) {
+    syncFromNotion().then(() => {
+      loadTodayData();
+      renderGrid();
+      renderLog();
+    });
+  }
 </script>
 </body>
 </html>
