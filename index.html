@@ -1,11 +1,11 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
- <link rel="apple-touch-icon" href="icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Colour of Day">
-<meta name="theme-color" content="#F3EEE8">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Colour of Day">
+  <meta name="theme-color" content="#F3EEE8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,6 +40,7 @@
       font-family: 'Noto Sans JP', 'PingFang TC', 'Apple SD Gothic Neo', sans-serif;
       color: var(--ink);
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
     body::before {
@@ -811,9 +812,9 @@
   </div>
 
   <!-- 紀錄列表 -->
-  <div style="margin-top:50px;margin-bottom:0;padding-left:30px;">
+  <div style="margin-top:50px;margin-bottom:0;padding-left:30px;padding-right:24px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <button onclick="toggleLog()" id="logToggleBtn" style="background:none;border:none;cursor:pointer;font-family:Sulphur Point,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);text-decoration:underline;text-underline-offset:3px;padding:0;">Your Recent Life Note</button>
+      <button onclick="toggleLog()" id="logToggleBtn" style="background:none;border:none;cursor:pointer;font-family:Sulphur Point,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);text-decoration:underline;text-underline-offset:3px;padding:0;white-space:nowrap;">Your Recent Life Note</button>
       <div style="display:flex;align-items:center;gap:12px;">
         <button onclick="exportData()" style="background:none;border:none;cursor:pointer;font-family:Sulphur Point,sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.06em;padding:0;text-decoration:underline;text-underline-offset:2px;">匯出</button>
         <button onclick="importData()" style="background:none;border:none;cursor:pointer;font-family:Sulphur Point,sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.06em;padding:0;text-decoration:underline;text-underline-offset:2px;">匯入</button>
