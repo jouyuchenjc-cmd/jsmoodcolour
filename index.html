@@ -744,6 +744,12 @@
       header { flex-direction: column; align-items: flex-start; }
       h1 { font-size: 20px; }
     }
+  
+    @keyframes blessingFadeIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
   </style>
 </head>
 <body>
@@ -823,6 +829,31 @@
     </div>
     <div id="gridContainer"></div>
     <div class="stats-bar" id="statsBar"></div>
+  </div>
+
+  <!-- 今日一語按鈕 -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin:32px 0 8px;">
+    <div id="streakDisplay" style="font-family:'Sulphur Point',sans-serif;font-size:11px;letter-spacing:0.1em;color:#4D586F;display:none;">
+      <span id="streakText"></span>
+    </div>
+    <button onclick="openBlessingCard()" style="background:#959fb0;border:none;border-radius:30px;padding:9px 24px;font-family:'Sulphur Point',sans-serif;font-size:12px;letter-spacing:0.1em;color:#fff;cursor:pointer;transition:all 0.2s;" onmouseenter="this.style.background='#7f8fa3';" onmouseleave="this.style.background='#959fb0';">♥ 一封信，給今天的你 ♥</button>
+    </div>
+
+  <!-- 今日一語 Modal -->
+  <div id="blessingOverlay" onclick="closeBlessingCard(event)" style="display:none;position:fixed;inset:0;background:rgba(60,55,48,0.45);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:24px;">
+    <div id="blessingCard" style="background:#F3EEE8;border-radius:24px;width:100%;max-width:320px;overflow:hidden;box-shadow:0 8px 40px rgba(60,55,48,0.18);display:flex;flex-direction:column;animation:blessingFadeIn 0.3s ease;">
+      <!-- 插畫區 -->
+      <div id="blessingIllustration" style="width:100%;height:200px;background:rgba(77,88,111,0.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-family:'Sulphur Point',sans-serif;font-size:10px;letter-spacing:0.1em;color:rgba(77,88,111,0.3);">ILLUSTRATION · 200 × 200 px</span>
+      </div>
+      <!-- 文字區 -->
+      <div style="padding:24px 28px 20px;">
+        <p id="blessingText" style="font-family:'Noto Sans TC','PingFang TC',sans-serif;font-size:14px;line-height:1.85;color:#4D586F;margin:0 0 20px;letter-spacing:0.03em;"></p>
+        <div style="display:flex;justify-content:flex-end;gap:10px;align-items:center;">
+          <button onclick="closeBlessingCard()" style="background:none;border:none;font-family:'Sulphur Point',sans-serif;font-size:11px;color:rgba(77,88,111,0.45);cursor:pointer;letter-spacing:0.06em;padding:0;">關閉</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- 紀錄列表 -->
@@ -1188,6 +1219,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     saveData();
     renderGrid();
     renderLog();
+    renderStreak();
     const msg = document.getElementById('saveMsg');
     msg.textContent = '儲存中...';
     msg.classList.add('show');
@@ -1227,6 +1259,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     saveData();
     renderGrid();
     renderLog();
+    renderStreak();
     closeModalDirect();
     await writeToNotion(modalDate, modalMood, note);
   }
@@ -1831,14 +1864,51 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   }
 
   loadSettings();
+  const BLESSING_CARDS = ["自我覺察，不是為了分類對錯，而是意識到——原來這一刻的自己，是這個樣子。", "不開心的存在，是讓我們看見開心的樣貌，也讓我們知道有哪些，是未來想選擇不重複的。", "意識到自己不喜歡的自己，需要勇氣。願意承認並接受各種樣貌的自己，更是一場包容練習。"];
+
+  let _lastBlessingIdx = -1;
+
+  function openBlessingCard() {
+    let idx;
+    do { idx = Math.floor(Math.random() * BLESSING_CARDS.length); }
+    while (BLESSING_CARDS.length > 1 && idx === _lastBlessingIdx);
+    _lastBlessingIdx = idx;
+    document.getElementById('blessingText').textContent = BLESSING_CARDS[idx];
+    const overlay = document.getElementById('blessingOverlay');
+    overlay.style.display = 'flex';
+  }
+
+  function closeBlessingCard(e) {
+    if (e && e.target !== document.getElementById('blessingOverlay')) return;
+    document.getElementById('blessingOverlay').style.display = 'none';
+  }
+
+
+  function calcTotalDays() {
+    return Object.keys(moodData).length;
+  }
+
+  function renderStreak() {
+    const total = calcTotalDays();
+    const el = document.getElementById('streakDisplay');
+    const txt = document.getElementById('streakText');
+    if (!el || !txt) return;
+    if (total >= 1) {
+      txt.textContent = `✦ 已經上色了 ${total} 天 ✦`;
+      el.style.display = 'block';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
   loadData();
   initHeader();
   loadTodayData();
   renderGrid();
   renderLog();
-
+  renderStreak();
 </script>
-  <div style="text-align:center;padding:28px 0 20px;font-family:'Sulphur Point',sans-serif;font-size:11px;color:rgba(220,229,239,0.3);letter-spacing:0.08em;">
+  <div style="text-align:center;padding:28px 0 20px;font-family:'Sulphur Point',sans-serif;font-size:11px;color:#8e8e8e;letter-spacing:0.08em;">
     © 2026 Triple.Cell_illustration — 細胞日常插畫
   </div>
 </body>
