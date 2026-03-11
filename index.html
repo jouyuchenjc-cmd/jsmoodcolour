@@ -2066,41 +2066,102 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     }
   }
 
-  async function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      if (document.querySelector(`script[src="${src}"]`)) return resolve();
-      const s = document.createElement('script');
-      s.src = src;
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
-
   async function saveCardAsImage() {
-    const card = document.getElementById('blessingCard');
-    if (!card) return;
     const btn = event && event.target;
     const origText = btn ? btn.textContent : '';
     if (btn) btn.textContent = '處理中…';
+
     try {
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-      const canvas = await html2canvas(card, {
-        backgroundColor: '#F3EEE8',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false
+      const text = document.getElementById('blessingText').textContent.trim();
+      const svgEl = document.getElementById('blessingIllustration')?.querySelector('svg');
+
+      const W = 640, PAD = 56;
+      const LINE_H = 34, FONT_SIZE = 28;
+      const IMG_H = svgEl && svgEl.style.display !== 'none' ? 400 : 0;
+
+      // Wrap text
+      const offscreen = document.createElement('canvas');
+      const octx = offscreen.getContext('2d');
+      octx.font = `${FONT_SIZE}px "Noto Sans TC", "PingFang TC", sans-serif`;
+      const maxW = W - PAD * 2;
+      const words = text.split('');
+      const lines = [];
+      let line = '';
+      for (const ch of words) {
+        const test = line + ch;
+        if (octx.measureText(test).width > maxW && line) {
+          lines.push(line); line = ch;
+        } else { line = test; }
+      }
+      if (line) lines.push(line);
+
+      const TEXT_H = lines.length * LINE_H + 20;
+      const BTM_PAD = 60;
+      const H = IMG_H + PAD + TEXT_H + BTM_PAD;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Background
+      ctx.fillStyle = '#F3EEE8';
+      // Rounded rect
+      const r = 48;
+      ctx.beginPath();
+      ctx.moveTo(r, 0); ctx.lineTo(W-r, 0);
+      ctx.quadraticCurveTo(W, 0, W, r);
+      ctx.lineTo(W, H-r); ctx.quadraticCurveTo(W, H, W-r, H);
+      ctx.lineTo(r, H); ctx.quadraticCurveTo(0, H, 0, H-r);
+      ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      // SVG → PNG
+      if (IMG_H > 0) {
+        await new Promise((resolve) => {
+          const svgData = new XMLSerializer().serializeToString(svgEl);
+          const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const img = new Image();
+          img.onload = () => {
+            // Draw SVG centered, preserve aspect ratio, no stretch
+            const drawW = W - PAD * 2;
+            const drawH = IMG_H - 20;
+            const aspect = 200 / 200; // viewBox is 200x200
+            let dw = drawW, dh = drawW / aspect;
+            if (dh > drawH) { dh = drawH; dw = dh * aspect; }
+            const dx = (W - dw) / 2;
+            const dy = 20 + (drawH - dh) / 2;
+            ctx.drawImage(img, dx, dy, dw, dh);
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+          img.src = url;
+        });
+      }
+
+      // Text
+      ctx.fillStyle = '#4D586F';
+      ctx.font = `${FONT_SIZE}px "Noto Sans TC", "PingFang TC", sans-serif`;
+      ctx.textBaseline = 'top';
+      const textStartY = IMG_H + PAD;
+      lines.forEach((l, i) => {
+        ctx.fillText(l, PAD, textStartY + i * LINE_H);
       });
+
+      // Download
       const link = document.createElement('a');
       link.download = 'colour-of-your-day-' + new Date().toISOString().slice(0,10) + '.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
       if (btn) btn.textContent = '✓ 已儲存';
       setTimeout(() => { if (btn) btn.textContent = origText; }, 2000);
+
     } catch(e) {
       if (btn) btn.textContent = origText;
-      alert('此環境不支援直接儲存，請長按圖片或截圖 🙏');
+      console.error(e);
+      alert('儲存失敗，請截圖代替 🙏');
     }
   }
 
