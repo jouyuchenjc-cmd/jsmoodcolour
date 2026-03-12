@@ -2074,65 +2074,45 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     try {
       const text = document.getElementById('blessingText').textContent.trim();
       const svgEl = document.getElementById('blessingIllustration')?.querySelector('svg');
+      const hasIllus = svgEl && svgEl.style.display !== 'none';
 
-      const W = 640, PAD = 56;
-      const LINE_H = 34, FONT_SIZE = 28;
-      const IMG_H = svgEl && svgEl.style.display !== 'none' ? 400 : 0;
-
-      // Wrap text
-      const offscreen = document.createElement('canvas');
-      const octx = offscreen.getContext('2d');
-      octx.font = `${FONT_SIZE}px "Noto Sans TC", "PingFang TC", sans-serif`;
-      const maxW = W - PAD * 2;
-      const words = text.split('');
-      const lines = [];
-      let line = '';
-      for (const ch of words) {
-        const test = line + ch;
-        if (octx.measureText(test).width > maxW && line) {
-          lines.push(line); line = ch;
-        } else { line = test; }
-      }
-      if (line) lines.push(line);
-
-      const TEXT_H = lines.length * LINE_H + 20;
-      const BTM_PAD = 60;
-      const H = IMG_H + PAD + TEXT_H + BTM_PAD;
-
+      const W = 1080, H = 1350;
       const canvas = document.createElement('canvas');
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext('2d');
 
       // Background
       ctx.fillStyle = '#F3EEE8';
-      // Rounded rect
-      const r = 48;
-      ctx.beginPath();
-      ctx.moveTo(r, 0); ctx.lineTo(W-r, 0);
-      ctx.quadraticCurveTo(W, 0, W, r);
-      ctx.lineTo(W, H-r); ctx.quadraticCurveTo(W, H, W-r, H);
-      ctx.lineTo(r, H); ctx.quadraticCurveTo(0, H, 0, H-r);
-      ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
-      ctx.closePath();
-      ctx.fill();
+      ctx.fillRect(0, 0, W, H);
 
-      // SVG → PNG
-      if (IMG_H > 0) {
+      // Subtle grid
+      ctx.strokeStyle = 'rgba(77,88,111,0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= W; x += 54) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for (let y = 0; y <= H; y += 54) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+      // Top title — centered
+      ctx.fillStyle = 'rgba(77,88,111,0.3)';
+      ctx.font = '22px "Noto Sans TC", "PingFang TC", sans-serif';
+      ctx.textBaseline = 'top';
+      const title = 'THE COLOUR OF YOUR DAY.';
+      const titleW = ctx.measureText(title).width;
+      ctx.fillText(title, (W - titleW) / 2, 120);
+
+      // Divider
+      ctx.strokeStyle = 'rgba(77,88,111,0.14)';
+      ctx.beginPath(); ctx.moveTo(108, 166); ctx.lineTo(W-108, 166); ctx.stroke();
+
+      // Illustration
+      const ILLUS_TOP = 200, ILLUS_SIZE = 560;
+      if (hasIllus) {
         await new Promise((resolve) => {
           const svgData = new XMLSerializer().serializeToString(svgEl);
           const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
           const url = URL.createObjectURL(blob);
           const img = new Image();
           img.onload = () => {
-            // Draw SVG centered, preserve aspect ratio, no stretch
-            const drawW = W - PAD * 2;
-            const drawH = IMG_H - 20;
-            const aspect = 200 / 200; // viewBox is 200x200
-            let dw = drawW, dh = drawW / aspect;
-            if (dh > drawH) { dh = drawH; dw = dh * aspect; }
-            const dx = (W - dw) / 2;
-            const dy = 20 + (drawH - dh) / 2;
-            ctx.drawImage(img, dx, dy, dw, dh);
+            ctx.drawImage(img, (W - ILLUS_SIZE) / 2, ILLUS_TOP, ILLUS_SIZE, ILLUS_SIZE);
             URL.revokeObjectURL(url);
             resolve();
           };
@@ -2141,14 +2121,53 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
         });
       }
 
-      // Text
-      ctx.fillStyle = '#4D586F';
+      // Divider before text
+      const TEXT_TOP = ILLUS_TOP + (hasIllus ? ILLUS_SIZE : 0) + 80;
+      ctx.strokeStyle = 'rgba(77,88,111,0.14)';
+      ctx.beginPath(); ctx.moveTo(108, TEXT_TOP-40); ctx.lineTo(W-108, TEXT_TOP-40); ctx.stroke();
+
+      // Body text: break on punctuation, each line centered
+      const PUNCTS = new Set(['，','。','！','？','——','：','；','…']);
+      const FONT_SIZE = 34, LINE_H = 58, PAD = 100;
       ctx.font = `${FONT_SIZE}px "Noto Sans TC", "PingFang TC", sans-serif`;
+      ctx.fillStyle = '#4D586F';
       ctx.textBaseline = 'top';
-      const textStartY = IMG_H + PAD;
+      const maxW = W - PAD * 2;
+      const chars = Array.from(text);
+      const lines = [];
+      let line = '';
+      for (let i = 0; i < chars.length; i++) {
+        line += chars[i];
+        const nextCh = chars[i+1] || '';
+        const lineW = ctx.measureText(line).width;
+        const nextW = ctx.measureText(line + nextCh).width;
+        if (PUNCTS.has(chars[i]) && nextW > maxW * 0.4) {
+          lines.push(line); line = '';
+        } else if (nextW > maxW && line) {
+          lines.push(line); line = '';
+        }
+      }
+      if (line) lines.push(line);
+
       lines.forEach((l, i) => {
-        ctx.fillText(l, PAD, textStartY + i * LINE_H);
+        const lw = ctx.measureText(l).width;
+        ctx.fillText(l, (W - lw) / 2, TEXT_TOP + i * LINE_H);
       });
+
+      const textBottom = TEXT_TOP + lines.length * LINE_H;
+
+      // Brand — centered, fixed gap below text
+      const BRAND_Y = textBottom + 120;
+      ctx.strokeStyle = 'rgba(77,88,111,0.1)';
+      ctx.beginPath(); ctx.moveTo(108, BRAND_Y-36); ctx.lineTo(W-108, BRAND_Y-36); ctx.stroke();
+      ctx.fillStyle = 'rgba(77,88,111,0.18)';
+      ctx.beginPath(); ctx.arc(W/2, BRAND_Y-24, 3, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(77,88,111,0.28)';
+      ctx.font = '22px "Noto Sans TC", "PingFang TC", sans-serif';
+      ctx.textBaseline = 'middle';
+      const brand = 'Triple.Cell_illustration  ·  細胞日常';
+      const brandW = ctx.measureText(brand).width;
+      ctx.fillText(brand, (W - brandW) / 2, BRAND_Y);
 
       // Download
       const link = document.createElement('a');
