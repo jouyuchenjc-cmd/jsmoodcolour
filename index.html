@@ -1913,8 +1913,10 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       const d = new Date(startOfWeek);
       d.setDate(startOfWeek.getDate() + i);
       const dateStr = formatDate(d);
-      const isFuture = d > today; // 未來永遠用真實today
-      const isPast = d < today;
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const dMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const isFuture = dMidnight > todayMidnight;
+      const isPast = dMidnight < todayMidnight;
 
       // 每天一個 col：label 在上，圓圈在下
       const col = document.createElement('div');
