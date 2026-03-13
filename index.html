@@ -10,7 +10,148 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Colour of Your Day.</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js">  function toggleChartMode() {
+    chartMode = !chartMode;
+    const btn = document.getElementById('chartToggleBtn');
+    // Button label shows what you'll switch TO (i.e. the other mode)
+    btn.textContent = chartMode ? '▦ GRID' : '～ CHART';
+    document.getElementById('gridContainer').style.display = chartMode ? 'none' : '';
+    document.getElementById('statsBar').style.display = chartMode ? 'none' : '';
+    document.getElementById('chartContainer').style.display = chartMode ? 'block' : 'none';
+    if (chartMode) renderChart();
+  }
+
+  function getMonthsForView() {
+    const now = new Date();
+    const months = [];
+    if (currentView === 'quarter') {
+      // current quarter: 3 months
+      const qStart = Math.floor(now.getMonth() / 3) * 3 + (viewOffset * 3);
+      for (let i = 0; i < 3; i++) {
+        const d = new Date(now.getFullYear(), qStart + i, 1);
+        months.push({ year: d.getFullYear(), month: d.getMonth() });
+      }
+    } else {
+      // year: all 12 months of current year + viewOffset years
+      const yr = now.getFullYear() + viewOffset;
+      for (let m = 0; m < 12; m++) {
+        months.push({ year: yr, month: m });
+      }
+    }
+    return months;
+  }
+
+  function renderChart() {
+    const container = document.getElementById('chartContainer');
+    container.innerHTML = '';
+
+    const months = getMonthsForView();
+    const MOODS = ['happy','sad','neutral','unrecorded'];
+    const COLORS = {
+      happy:      'rgba(242,203,134,0.9)',
+      sad:        'rgba(172,138,138,0.85)',
+      neutral:    'rgba(180,190,200,0.8)',
+      unrecorded: 'rgba(220,229,239,0.2)',
+    };
+    const LABELS = { happy:'開心', sad:'不開心', neutral:'沒感覺', unrecorded:'未記錄' };
+
+    // Build data per month
+    const data = { happy:[], sad:[], neutral:[], unrecorded:[] };
+    const xLabels = [];
+    const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    months.forEach(({ year, month }) => {
+      xLabels.push(MONTH_NAMES[month]);
+      const daysInMonth = new Date(year, month+1, 0).getDate();
+      const counts = { happy:0, sad:0, neutral:0, unrecorded:0 };
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const mood = moodData[dateStr]?.mood || '';
+        if (mood === 'happy') counts.happy++;
+        else if (mood === 'sad') counts.sad++;
+        else if (mood === 'neutral') counts.neutral++;
+        else counts.unrecorded++;
+      }
+      const total = daysInMonth;
+      MOODS.forEach(m => data[m].push(Math.round(counts[m] / total * 100)));
+    });
+
+    // Canvas
+    const W = container.clientWidth || 340;
+    const H = 200;
+    const canvas = document.createElement('canvas');
+    canvas.width = W * 2; canvas.height = H * 2;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    container.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+
+    const PAD_L = 36, PAD_R = 16, PAD_T = 16, PAD_B = 32;
+    const cW = W - PAD_L - PAD_R;
+    const cH = H - PAD_T - PAD_B;
+    const n = months.length;
+
+    // Y axis gridlines
+    ctx.strokeStyle = 'rgba(220,229,239,0.08)';
+    ctx.lineWidth = 1;
+    [0,25,50,75,100].forEach(pct => {
+      const y = PAD_T + cH - (pct/100)*cH;
+      ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(PAD_L+cW, y); ctx.stroke();
+      ctx.fillStyle = 'rgba(220,229,239,0.3)';
+      ctx.font = '8px Sulphur Point, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pct+'%', 0, y);
+    });
+
+    // X axis labels
+    ctx.fillStyle = 'rgba(220,229,239,0.45)';
+    ctx.font = '9px Sulphur Point, sans-serif';
+    ctx.textBaseline = 'top';
+    xLabels.forEach((lbl, i) => {
+      const x = PAD_L + (i / (n-1 || 1)) * cW;
+      ctx.textAlign = 'center';
+      ctx.fillText(lbl, x, H - PAD_B + 6);
+    });
+
+    // Draw lines
+    MOODS.forEach(mood => {
+      const pts = data[mood];
+      ctx.beginPath();
+      ctx.strokeStyle = COLORS[mood];
+      ctx.lineWidth = mood === 'unrecorded' ? 1 : 2;
+      ctx.setLineDash(mood === 'unrecorded' ? [3,3] : []);
+      pts.forEach((pct, i) => {
+        const x = PAD_L + (i / (n-1 || 1)) * cW;
+        const y = PAD_T + cH - (pct/100)*cH;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Dots
+      pts.forEach((pct, i) => {
+        const x = PAD_L + (i / (n-1 || 1)) * cW;
+        const y = PAD_T + cH - (pct/100)*cH;
+        ctx.beginPath();
+        ctx.arc(x, y, mood === 'unrecorded' ? 2 : 3, 0, Math.PI*2);
+        ctx.fillStyle = COLORS[mood];
+        ctx.fill();
+      });
+    });
+    ctx.setLineDash([]);
+
+    // Legend
+    const legend = document.createElement('div');
+    legend.className = 'chart-legend';
+    MOODS.forEach(mood => {
+      const item = document.createElement('div');
+      item.className = 'chart-legend-item';
+      item.innerHTML = `<div class="chart-legend-dot" style="background:${COLORS[mood]}"></div>${LABELS[mood]}`;
+      legend.appendChild(item);
+    });
+    container.appendChild(legend);
+  }
+
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sulphur+Point:wght@300;400;700&family=Noto+Sans+JP:wght@300;400;500&display=swap');
 
@@ -750,6 +891,12 @@
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+  
+  #chartContainer canvas { display:block; }
+  .chart-legend { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
+  .chart-legend-item { display:flex; align-items:center; gap:5px; font-family:'Sulphur Point',sans-serif; font-size:10px; color:rgba(220,229,239,0.55); letter-spacing:0.05em; }
+  .chart-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
   </style>
 </head>
 <body>
@@ -806,11 +953,14 @@
   </div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;">
-    <div class="view-tabs">
-      <button class="tab" onclick="switchView('week')">週</button>
-      <button class="tab active" onclick="switchView('month')">月</button>
-      <button class="tab" onclick="switchView('quarter')">季</button>
-      <button class="tab" onclick="switchView('year')">年</button>
+    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:15px;">
+      <div class="view-tabs">
+        <button class="tab" onclick="switchView('week')">週</button>
+        <button class="tab active" onclick="switchView('month')">月</button>
+        <button class="tab" onclick="switchView('quarter')">季</button>
+        <button class="tab" onclick="switchView('year')">年</button>
+      </div>
+      <button id="chartToggleBtn" onclick="toggleChartMode()" style="display:none;background:none;border:1px solid #4a5568;color:#898989;font-size:11px;font-family:'Sulphur Point',sans-serif;letter-spacing:0.08em;padding:4px 0;border-radius:20px;cursor:pointer;transition:all 0.2s;width:90px;text-align:center;line-height:1.4;">～ CHART</button>
     </div>
     <!-- Cell Animation Scene -->
     <div id="cell-scene" style="display:none;align-items:center;pointer-events:none;flex-shrink:0;margin-right:45px;">
@@ -822,12 +972,13 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <div class="grid-label" id="gridLabel" style="margin-bottom:0;"></div>
       <div id="viewNav" style="display:flex;align-items:center;gap:8px;">
-        <button onclick="navPrev()" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink);padding:0;font-family:Sulphur Point,sans-serif;">←</button>
+        <button id="navPrevBtn" onclick="navPrev()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:18px;padding:0 8px;cursor:pointer;font-family:Sulphur Point,sans-serif;transition:opacity 0.2s;line-height:1;">‹</button>
         <span id="navLabel" style="font-family:Sulphur Point,sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.06em;min-width:60px;text-align:center;"></span>
-        <button onclick="navNext()" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink);padding:0;font-family:Sulphur Point,sans-serif;">→</button>
+        <button id="navNextBtn" onclick="navNext()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:18px;padding:0 8px;cursor:pointer;font-family:Sulphur Point,sans-serif;transition:opacity 0.2s;line-height:1;">›</button>
       </div>
     </div>
     <div id="gridContainer"></div>
+    <div id="chartContainer" style="display:none;padding:8px 0 16px;"></div>
     <div class="stats-bar" id="statsBar"></div>
   </div>
 
@@ -923,7 +1074,13 @@
       .cls-19 {
         fill: #e8987c;
       }
-    </style>
+    
+  #chartContainer canvas { display:block; }
+  .chart-legend { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
+  .chart-legend-item { display:flex; align-items:center; gap:5px; font-family:'Sulphur Point',sans-serif; font-size:10px; color:rgba(220,229,239,0.55); letter-spacing:0.05em; }
+  .chart-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  </style>
   </defs>
   <path class="cls-11" d="M100.15,121.49c-.19-1.37-.52-2.69-1.14-3.93-.79-1.58-2.09-2.4-3.36-3.53-2.17-1.94-.72-5.71-.91-8.23-.24-3.16-2.1-5.58-4.61-7.37-2.72-1.94-6.07-2.82-8.72-4.88-2.57-2-4.41-4.77-6.32-7.37-.43-.59-.87-1.18-1.33-1.76.45-.35.72-.91.54-1.62-.89-3.54-4.26-5.63-7.75-5.91-2.08-.17-4.22.33-6.16,1.04-.97.35-2.27.92-2.9,1.82-.47-.12-.99-.01-1.42.45-2.85,3.02-3.78,7.2-3.9,11.24-.13,4.23,1.13,8.24,4.55,10.92,3.46,2.72,7.83,3.49,12.12,3.69.98.05,1.48.9,2.75.94.07.4,1.02-.08,1.45.23,2.83,2.06,7.21,2.75,9.02,6,.98,1.75,1.17,3.89,1.37,5.85.07.68.14,1.37.18,2.07-.33.18-.62.48-.78.92-.31.83-.37,1.66-.25,2.44.02.69.12,1.38.31,2.07.19.7.92,1.14,1.63,1.17.71.56,1.57.95,2.52,1.12,1.68.29,3.43.29,5.13.4,1.83.12,4.21.69,5.97.01,2.98-1.15,2.35-5.27,2.01-7.76Z"/>
   <path class="cls-1" d="M131.57,121.41c-2.33-7.9-6.26-15.22-11.5-21.54-.07-.16-.15-.31-.27-.46-4.29-5.1-9.41-9.37-14.67-13.43-2.62-2.02-5.22-4.12-7.99-5.94-2.92-1.92-6.16-3.23-9.39-4.51-.63-.25-1.14-.09-1.48.27-.21-.33-.42-.65-.63-.98-1.13-1.75-3.94-.13-2.81,1.64,2.48,3.86,4.95,7.71,7.43,11.57,2.34,3.65,4.73,7.22,7.6,10.48,2.87,3.26,5.96,6.34,9.02,9.42,1.45,1.47,2.87,3.04,4.47,4.34,1.61,1.31,3.49,2.19,5.3,3.18,4.31,2.38,8.42,5.08,12.53,7.79,1.19.79,2.78-.51,2.39-1.84Z"/>
@@ -1111,6 +1268,7 @@
   let modalMood = null;
   let modalDate = null;
   let currentView = 'month';
+  let chartMode = false;
 
   function loadData() {
     try {
@@ -1578,14 +1736,20 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   let logOpen = true;
   let viewOffset = 0; // 0 = 當前, -1 = 上一個, 1 = 下一個（不允許未來）
 
-  function navPrev() { viewOffset--; renderGrid(); renderLog(); }
-  function navNext() { if (viewOffset < 0) { viewOffset++; renderGrid(); renderLog(); } }
-  function toggleLog() {
-    logOpen = !logOpen;
-    const list = document.getElementById('logList');
-    const arrow = document.getElementById('logToggleArrow');
-    list.style.display = logOpen ? 'flex' : 'none';
-    arrow.textContent = logOpen ? '−' : '+';
+  function navPrev() { viewOffset--; renderGrid(); renderLog(); updateNavBtns(); }
+  function navNext() { if (viewOffset < 0) { viewOffset++; renderGrid(); renderLog(); } updateNavBtns(); }
+
+  function updateNavBtns() {
+    const prev = document.getElementById('navPrevBtn');
+    const next = document.getElementById('navNextBtn');
+    if (!prev || !next) return;
+    // navNext is blocked at viewOffset === 0 (can't go to future)
+    next.style.opacity = viewOffset >= 0 ? '0.25' : '1';
+    next.style.cursor  = viewOffset >= 0 ? 'default' : 'pointer';
+    // navPrev has no hard limit but grey out at a reasonable past boundary (-24 months / -8 quarters / -2 years)
+    const limit = currentView === 'week' ? -104 : currentView === 'month' ? -24 : currentView === 'quarter' ? -8 : -3;
+    prev.style.opacity = viewOffset <= limit ? '0.25' : '1';
+    prev.style.cursor  = viewOffset <= limit ? 'default' : 'pointer';
   }
 
   function showConfirm(msg, onOk, onCancel) {
@@ -1668,8 +1832,24 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     document.querySelectorAll('.tab').forEach((t,i) => {
       t.classList.toggle('active', ['week','month','quarter','year'][i] === view);
     });
-    renderGrid();
+    // show/hide chart toggle button
+    const btn = document.getElementById('chartToggleBtn');
+    if (btn) btn.style.display = (view === 'quarter' || view === 'year') ? 'inline-block' : 'none';
+    // disable chart mode for week/month
+    if ((view === 'week' || view === 'month') && chartMode) {
+      chartMode = false;
+      if (btn) btn.textContent = '～ CHART';  // back to grid = offer chart
+      document.getElementById('gridContainer').style.display = '';
+      document.getElementById('statsBar').style.display = '';
+      document.getElementById('chartContainer').style.display = 'none';
+    }
+    if (chartMode) {
+      renderChart();
+    } else {
+      renderGrid();
+    }
     renderLog();
+    updateNavBtns();
   }
 
   function getMoodClass(dateStr) {
@@ -2190,7 +2370,148 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   renderGrid();
   renderLog();
   renderStreak();
-</script>
+  function toggleChartMode() {
+    chartMode = !chartMode;
+    const btn = document.getElementById('chartToggleBtn');
+    // Button label shows what you'll switch TO (i.e. the other mode)
+    btn.textContent = chartMode ? '▦ GRID' : '～ CHART';
+    document.getElementById('gridContainer').style.display = chartMode ? 'none' : '';
+    document.getElementById('statsBar').style.display = chartMode ? 'none' : '';
+    document.getElementById('chartContainer').style.display = chartMode ? 'block' : 'none';
+    if (chartMode) renderChart();
+  }
+
+  function getMonthsForView() {
+    const now = new Date();
+    const months = [];
+    if (currentView === 'quarter') {
+      // current quarter: 3 months
+      const qStart = Math.floor(now.getMonth() / 3) * 3 + (viewOffset * 3);
+      for (let i = 0; i < 3; i++) {
+        const d = new Date(now.getFullYear(), qStart + i, 1);
+        months.push({ year: d.getFullYear(), month: d.getMonth() });
+      }
+    } else {
+      // year: all 12 months of current year + viewOffset years
+      const yr = now.getFullYear() + viewOffset;
+      for (let m = 0; m < 12; m++) {
+        months.push({ year: yr, month: m });
+      }
+    }
+    return months;
+  }
+
+  function renderChart() {
+    const container = document.getElementById('chartContainer');
+    container.innerHTML = '';
+
+    const months = getMonthsForView();
+    const MOODS = ['happy','sad','neutral','unrecorded'];
+    const COLORS = {
+      happy:      'rgba(242,203,134,0.9)',
+      sad:        'rgba(172,138,138,0.85)',
+      neutral:    'rgba(180,190,200,0.8)',
+      unrecorded: 'rgba(220,229,239,0.2)',
+    };
+    const LABELS = { happy:'開心', sad:'不開心', neutral:'沒感覺', unrecorded:'未記錄' };
+
+    // Build data per month
+    const data = { happy:[], sad:[], neutral:[], unrecorded:[] };
+    const xLabels = [];
+    const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    months.forEach(({ year, month }) => {
+      xLabels.push(MONTH_NAMES[month]);
+      const daysInMonth = new Date(year, month+1, 0).getDate();
+      const counts = { happy:0, sad:0, neutral:0, unrecorded:0 };
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const mood = moodData[dateStr]?.mood || '';
+        if (mood === 'happy') counts.happy++;
+        else if (mood === 'sad') counts.sad++;
+        else if (mood === 'neutral') counts.neutral++;
+        else counts.unrecorded++;
+      }
+      const total = daysInMonth;
+      MOODS.forEach(m => data[m].push(Math.round(counts[m] / total * 100)));
+    });
+
+    // Canvas
+    const W = container.clientWidth || 340;
+    const H = 200;
+    const canvas = document.createElement('canvas');
+    canvas.width = W * 2; canvas.height = H * 2;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    container.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+
+    const PAD_L = 36, PAD_R = 16, PAD_T = 16, PAD_B = 32;
+    const cW = W - PAD_L - PAD_R;
+    const cH = H - PAD_T - PAD_B;
+    const n = months.length;
+
+    // Y axis gridlines
+    ctx.strokeStyle = 'rgba(220,229,239,0.08)';
+    ctx.lineWidth = 1;
+    [0,25,50,75,100].forEach(pct => {
+      const y = PAD_T + cH - (pct/100)*cH;
+      ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(PAD_L+cW, y); ctx.stroke();
+      ctx.fillStyle = 'rgba(220,229,239,0.3)';
+      ctx.font = '8px Sulphur Point, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pct+'%', 0, y);
+    });
+
+    // X axis labels
+    ctx.fillStyle = 'rgba(220,229,239,0.45)';
+    ctx.font = '9px Sulphur Point, sans-serif';
+    ctx.textBaseline = 'top';
+    xLabels.forEach((lbl, i) => {
+      const x = PAD_L + (i / (n-1 || 1)) * cW;
+      ctx.textAlign = 'center';
+      ctx.fillText(lbl, x, H - PAD_B + 6);
+    });
+
+    // Draw lines
+    MOODS.forEach(mood => {
+      const pts = data[mood];
+      ctx.beginPath();
+      ctx.strokeStyle = COLORS[mood];
+      ctx.lineWidth = mood === 'unrecorded' ? 1 : 2;
+      ctx.setLineDash(mood === 'unrecorded' ? [3,3] : []);
+      pts.forEach((pct, i) => {
+        const x = PAD_L + (i / (n-1 || 1)) * cW;
+        const y = PAD_T + cH - (pct/100)*cH;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Dots
+      pts.forEach((pct, i) => {
+        const x = PAD_L + (i / (n-1 || 1)) * cW;
+        const y = PAD_T + cH - (pct/100)*cH;
+        ctx.beginPath();
+        ctx.arc(x, y, mood === 'unrecorded' ? 2 : 3, 0, Math.PI*2);
+        ctx.fillStyle = COLORS[mood];
+        ctx.fill();
+      });
+    });
+    ctx.setLineDash([]);
+
+    // Legend
+    const legend = document.createElement('div');
+    legend.className = 'chart-legend';
+    MOODS.forEach(mood => {
+      const item = document.createElement('div');
+      item.className = 'chart-legend-item';
+      item.innerHTML = `<div class="chart-legend-dot" style="background:${COLORS[mood]}"></div>${LABELS[mood]}`;
+      legend.appendChild(item);
+    });
+    container.appendChild(legend);
+  }
+
+  </script>
   <div style="text-align:center;padding:28px 0 20px;font-family:'Sulphur Point',sans-serif;font-size:11px;color:#8e8e8e;letter-spacing:0.08em;">
     © 2026 Triple.Cell_illustration — 細胞日常插畫
   </div>
