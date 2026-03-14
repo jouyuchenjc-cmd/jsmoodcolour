@@ -1572,13 +1572,15 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     if (!modalMood) { alert('請選擇心情！'); return; }
     if (!modalDate) { alert('日期錯誤，請重新開啟'); return; }
     const note = document.getElementById('modalNote').value.trim();
-    moodData[modalDate] = { mood: modalMood, note };
+    const savedDate = modalDate;
+    const savedMood = modalMood;
+    moodData[savedDate] = { mood: savedMood, note };
     saveData();
     renderGrid();
     renderLog();
     renderStreak();
     closeModalDirect();
-    await writeToNotion(modalDate, modalMood, note);
+    await writeToNotion(savedDate, savedMood, note);
   }
 
   async function clearModal() {
