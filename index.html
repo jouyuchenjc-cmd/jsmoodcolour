@@ -1546,6 +1546,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
   // ── Modal ──
   function openModal(dateStr) {
+    dateStr = (dateStr || '').replace(/^["\' ]+|["\' ]+$/g, '').trim();
     modalDate = dateStr;
     modalMood = null;
     const entry = moodData[dateStr];
