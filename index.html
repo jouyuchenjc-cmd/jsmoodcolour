@@ -1391,6 +1391,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   // ── 寫入 Notion ──
   async function writeToNotion(dateStr, mood, note) {
     if (!notionSettings.apiKey || !notionSettings.dbId) return;
+    dateStr = (dateStr || '').replace(/^["']|["']$/g, '').trim();
     updateNotionStatus('syncing');
 
     const moodMap = { happy: '開心', mixed: '各半', sad: '不開心', neutral: '沒感覺' };
@@ -1478,7 +1479,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
         const res = await notionRequest('POST', `/databases/${notionSettings.dbId}/query`, body);
 
         for (const page of res.results) {
-          const dateVal = page.properties?.Date?.date?.start;
+          const dateVal = (page.properties?.Date?.date?.start || '').replace(/^["']|["']$/g, '').trim();
           const moodVal = page.properties?.Mood?.select?.name;
           const noteVal = page.properties?.Note?.rich_text?.[0]?.plain_text || '';
           if (dateVal && moodVal && moodMap[moodVal]) {
@@ -1601,14 +1602,27 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     }
     setSettingsMsg(`推送中... 0/${entries.length}`, false);
     updateNotionStatus('syncing');
-    let done = 0;
+    let done = 0, failed = 0;
     for (const [dateStr, entry] of entries) {
-      await writeToNotion(dateStr, entry.mood, entry.note || '');
+      let success = false;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await writeToNotion(dateStr, entry.mood, entry.note || '');
+          success = true;
+          break;
+        } catch(e) {
+          if (attempt < 2) await new Promise(r => setTimeout(r, 800));
+        }
+      }
+      if (!success) failed++;
       done++;
-      setSettingsMsg(`推送中... ${done}/${entries.length}`, false);
+      setSettingsMsg(`推送中... ${done}/${entries.length}${failed ? `（${failed} 筆失敗）` : ''}`, false);
+      await new Promise(r => setTimeout(r, 350));
     }
-    updateNotionStatus('connected');
-    setSettingsMsg(`✓ 推送完成！共 ${entries.length} 筆`, false);
+    updateNotionStatus(failed ? 'error' : 'connected');
+    setSettingsMsg(failed
+      ? `推送完成，${entries.length - failed} 筆成功，${failed} 筆失敗`
+      : `✓ 推送完成！共 ${entries.length} 筆`, false);
   }
 
 
@@ -2513,6 +2527,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     container.appendChild(legend);
   }
 
+
+  // ── Notification (Notion version — no SW, stub only) ──
   </script>
   <div style="text-align:center;padding:28px 0 20px;font-family:'Sulphur Point',sans-serif;font-size:11px;color:#8e8e8e;letter-spacing:0.08em;">
     © 2026 Triple.Cell_illustration — 細胞日常插畫
