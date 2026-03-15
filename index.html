@@ -2783,7 +2783,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       ctx.beginPath(); ctx.moveTo(108, TEXT_TOP-40); ctx.lineTo(W-108, TEXT_TOP-40); ctx.stroke();
 
       // Body text: break on punctuation, each line centered
-      const PUNCTS = new Set(['，','。','！','？','——','：','；','…']);
+      const PUNCTS = new Set(['，','。','！','？','：','；','…','、']);
+      const NO_START = new Set(['，','。','！','？','：','；','…','、','）',')','」','』']);
       const FONT_SIZE = 34, LINE_H = 58, PAD = 100;
       ctx.font = `${FONT_SIZE}px "Noto Sans TC", "PingFang TC", sans-serif`;
       ctx.fillStyle = '#4D586F';
@@ -2793,11 +2794,14 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       const lines = [];
       let line = '';
       for (let i = 0; i < chars.length; i++) {
-        line += chars[i];
+        const ch = chars[i];
         const nextCh = chars[i+1] || '';
-        const lineW = ctx.measureText(line).width;
+        line += ch;
         const nextW = ctx.measureText(line + nextCh).width;
-        if (PUNCTS.has(chars[i]) && nextW > maxW * 0.4) {
+        // 不在標點符號前斷行（避免標點孤立在行首）
+        if (NO_START.has(nextCh)) continue;
+        // 遇到標點符號後斷行
+        if (PUNCTS.has(ch) && ctx.measureText(line).width > maxW * 0.38) {
           lines.push(line); line = '';
         } else if (nextW > maxW && line) {
           lines.push(line); line = '';
