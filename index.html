@@ -55,21 +55,23 @@
     const container = document.getElementById('chartContainer');
     container.innerHTML = '';
 
-    // 更新 navLabel
+    // 更新 navLabel 和 gridLabel
     const _navLabel = document.getElementById('navLabel');
-    if (_navLabel) {
-      const _now = new Date();
-      const _base = new Date(_now.getFullYear(), _now.getMonth(), 1);
-      if (currentView === 'quarter') {
-        const _curQ = Math.floor(_now.getMonth()/3);
-        const _tQ = _curQ + viewOffset;
-        const _yearsOff = Math.floor(_tQ/4);
-        const _qInYear = ((_tQ%4)+4)%4;
-        const _qYear = _now.getFullYear() + _yearsOff;
-        _navLabel.textContent = `Q${_qInYear+1} ${_qYear}`;
-      } else if (currentView === 'year') {
-        _navLabel.textContent = `${_now.getFullYear() + viewOffset}`;
-      }
+    const _gridLabel = document.getElementById('gridLabel');
+    const _now = new Date();
+    if (currentView === 'quarter') {
+      const _curQ = Math.floor(_now.getMonth()/3);
+      const _tQ = _curQ + viewOffset;
+      const _yearsOff = Math.floor(_tQ/4);
+      const _qInYear = ((_tQ%4)+4)%4;
+      const _qYear = _now.getFullYear() + _yearsOff;
+      const _qLabel = `Q${_qInYear+1}`;
+      if (_navLabel) _navLabel.textContent = `${_qLabel} ${_qYear}`;
+      if (_gridLabel) _gridLabel.textContent = _qLabel;
+    } else if (currentView === 'year') {
+      const _yr = `${_now.getFullYear() + viewOffset}`;
+      if (_navLabel) _navLabel.textContent = _yr;
+      if (_gridLabel) _gridLabel.textContent = _yr;
     }
 
     const months = getMonthsForView();
@@ -80,7 +82,8 @@
       neutral:    'rgba(180,190,200,0.8)',
       unrecorded: 'rgba(220,229,239,0.2)',
     };
-    const LABELS = { happy:'開心', sad:'不開心', neutral:'沒感覺', unrecorded:'未記錄' };
+    const _CL = (typeof getLang === 'function') ? getLang() : { happy:'開心', sad:'不開心', neutral:'沒感覺', unrecorded:'未記錄' };
+    const LABELS = { happy:_CL.happy, sad:_CL.sad, neutral:_CL.neutral, unrecorded:_CL.unrecorded };
 
     // Build data per month
     const data = { happy:[], sad:[], neutral:[], unrecorded:[] };
@@ -2112,7 +2115,19 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
     const startStr = formatDate(start);
     const realNow = new Date(); // 真實今天
-    const nowStr = now > realNow ? formatDate(realNow) : formatDate(now);
+    // 計算這個期間的結束日
+    let periodEnd;
+    if (currentView === 'week') {
+      periodEnd = new Date(start); periodEnd.setDate(start.getDate() + 6);
+    } else if (currentView === 'month') {
+      periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (currentView === 'quarter') {
+      const qEndMonth = Math.floor(now.getMonth()/3)*3 + 3;
+      periodEnd = new Date(now.getFullYear(), qEndMonth, 0);
+    } else {
+      periodEnd = new Date(now.getFullYear(), 11, 31);
+    }
+    const nowStr = periodEnd > realNow ? formatDate(realNow) : formatDate(periodEnd);
     Object.entries(moodData).forEach(([date, entry]) => {
       if (date >= startStr && date <= nowStr) { counts[entry.mood]++; counts.total++; }
     });
@@ -2127,7 +2142,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     let totalDays = 0;
     const cur = new Date(start);
     const realToday = new Date();
-    const endBound = now > realToday ? realToday : now;
+    // 用 nowStr 對應的日期作為結束邊界
+    const endBound = new Date(nowStr);
     while (cur <= endBound) { totalDays++; cur.setDate(cur.getDate()+1); }
     const unrecorded = totalDays - counts.total;
 
@@ -2228,7 +2244,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
   loadSettings();
   const BLESSING_CARDS_ZH = ["自我察覺，不是場對錯的競賽，只是單純意識到，原來這一個的自己，是這個樣子", "不開心的存在，是讓我們能看見開心的樣貌，也讓我們知道有哪些，是未來想選擇不重複的", "意識到自己不喜歡的自己，需要勇氣。願意承認並接受各種樣貌的自己，更是一場包容練習", "慣性能被持續，是因為我們總能從中得到什麼，所以要讓慣性產生變動，或許要先問的是我願意放棄它所帶來的好嗎？", "想重複裡得到不同的結果，那就起身去，把重複切成絲，試著尋找能夠改變的那一條絲", "練習把那些自己能做不同選擇的能力拿回來吧！或許會發現，原來每件事都擁有更多的可能", "如果做不到全然相信，宇宙的早已安排，\n那就讓我們一起練習，讓自己不後悔每個當下的選擇"];
-  const BLESSING_CARDS_EN = ["Self-awareness isn't about being right or wrong — it's simply noticing, this is who I am right now", "Unhappiness exists so we can recognize what joy looks like, and know what we'd choose differently next time", "It takes courage to see the parts of yourself you don't like. Accepting all your faces is an even deeper practice", "Habits persist because we always gain something from them. To change a habit, maybe first ask — am I willing to give up what it gives me?", "If you want different results from the same loop, step out of it — shred the pattern, and find the one thread you can pull", "Take back the power to choose differently. You may find that every situation holds more possibilities than you thought", "If you can't fully trust that the universe has a plan,\nlet's practice together — choosing each moment without regret"];
+  const BLESSING_CARDS_EN = ["No matter what you notice through self-awareness, there is no right or wrong. It's simply a way of seeing — this is a part of who I am.", "Negative feelings are actually a gift. They show us what happiness looks like, and remind us what we'd rather not carry into the future.", "Realising the parts of ourselves we don't like takes courage. Being willing to see and accept every side of who we are — that's a practice of tolerance.", "The reason a habit keeps going is because we always get something from it. So if we want it to change, perhaps the real question to ask first is: am I willing to give up what it brings to me?", "If you want something different from a pattern that you keep repeating, take action to break it. Look for a tiny, simple part where we could make a small change.", "Why not reclaim the power to make your own choices — just for yourself? Once you start, you might find there are far more possibilities than you thought.", "If it's hard to fully trust that the universe has it all planned out, perhaps we could practise something simpler together: making each choice in a way we won't regret, and start from this moment."];
   var currentLang = (typeof localStorage !== "undefined" ? localStorage.getItem("moodLang") : null) || "zh";
   let BLESSING_CARDS = BLESSING_CARDS_ZH;
 
@@ -2895,6 +2911,11 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     while (BLESSING_CARDS.length > 1 && idx === _lastBlessingIdx);
     _lastBlessingIdx = idx;
     document.getElementById('blessingText').textContent = BLESSING_CARDS[idx];
+    const _dlBtn = document.querySelector('[onclick="saveCardAsImage()"]');
+    if (_dlBtn) _dlBtn.textContent = (typeof getLang === 'function' ? getLang() : {downloadCard:'↓ 歡迎下載這張卡片'}).downloadCard;
+    document.getElementById('blessingText').style.fontFamily = currentLang === 'en'
+      ? "'Sulphur Point', sans-serif"
+      : "'Noto Sans TC', 'PingFang TC', sans-serif";
     const illus = document.getElementById('blessingIllustration');
     if (illus) {
       illus.style.display = 'flex';
@@ -2997,7 +3018,9 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       const PUNCTS = new Set(['，','。','！','？','：','；','…','、']);
       const NO_START = new Set(['，','。','！','？','：','；','…','、','）',')','」','』']);
       const FONT_SIZE = 34, LINE_H = 58, PAD = 100;
-      ctx.font = `${FONT_SIZE}px "Noto Sans TC", "PingFang TC", sans-serif`;
+      ctx.font = currentLang === 'en'
+        ? `${FONT_SIZE}px "Sulphur Point", sans-serif`
+        : `${FONT_SIZE}px "Noto Sans TC", "PingFang TC", sans-serif`;
       ctx.fillStyle = '#4D586F';
       ctx.textBaseline = 'top';
       const maxW = W - PAD * 2;
@@ -3046,13 +3069,13 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       link.download = 'colour-of-your-day-' + new Date().toISOString().slice(0,10) + '.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
-      if (btn) btn.textContent = '✓ 已儲存';
+      if (btn) btn.textContent = currentLang === 'en' ? '✓ Saved' : '✓ 已儲存';
       setTimeout(() => { if (btn) btn.textContent = origText; }, 2000);
 
     } catch(e) {
       if (btn) btn.textContent = origText;
       console.error(e);
-      alert('儲存失敗，請截圖代替 🙏');
+      alert(currentLang === 'en' ? 'Save failed, please screenshot instead 🙏' : '儲存失敗，請截圖代替 🙏');
     }
   }
 
@@ -3102,21 +3125,23 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     const container = document.getElementById('chartContainer');
     container.innerHTML = '';
 
-    // 更新 navLabel
+    // 更新 navLabel 和 gridLabel
     const _navLabel = document.getElementById('navLabel');
-    if (_navLabel) {
-      const _now = new Date();
-      const _base = new Date(_now.getFullYear(), _now.getMonth(), 1);
-      if (currentView === 'quarter') {
-        const _curQ = Math.floor(_now.getMonth()/3);
-        const _tQ = _curQ + viewOffset;
-        const _yearsOff = Math.floor(_tQ/4);
-        const _qInYear = ((_tQ%4)+4)%4;
-        const _qYear = _now.getFullYear() + _yearsOff;
-        _navLabel.textContent = `Q${_qInYear+1} ${_qYear}`;
-      } else if (currentView === 'year') {
-        _navLabel.textContent = `${_now.getFullYear() + viewOffset}`;
-      }
+    const _gridLabel = document.getElementById('gridLabel');
+    const _now = new Date();
+    if (currentView === 'quarter') {
+      const _curQ = Math.floor(_now.getMonth()/3);
+      const _tQ = _curQ + viewOffset;
+      const _yearsOff = Math.floor(_tQ/4);
+      const _qInYear = ((_tQ%4)+4)%4;
+      const _qYear = _now.getFullYear() + _yearsOff;
+      const _qLabel = `Q${_qInYear+1}`;
+      if (_navLabel) _navLabel.textContent = `${_qLabel} ${_qYear}`;
+      if (_gridLabel) _gridLabel.textContent = _qLabel;
+    } else if (currentView === 'year') {
+      const _yr = `${_now.getFullYear() + viewOffset}`;
+      if (_navLabel) _navLabel.textContent = _yr;
+      if (_gridLabel) _gridLabel.textContent = _yr;
     }
 
     const months = getMonthsForView();
@@ -3127,7 +3152,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       neutral:    'rgba(180,190,200,0.8)',
       unrecorded: 'rgba(220,229,239,0.2)',
     };
-    const LABELS = { happy:'開心', sad:'不開心', neutral:'沒感覺', unrecorded:'未記錄' };
+    const _CL = (typeof getLang === 'function') ? getLang() : { happy:'開心', sad:'不開心', neutral:'沒感覺', unrecorded:'未記錄' };
+    const LABELS = { happy:_CL.happy, sad:_CL.sad, neutral:_CL.neutral, unrecorded:_CL.unrecorded };
 
     // Build data per month
     const data = { happy:[], sad:[], neutral:[], unrecorded:[] };
@@ -3305,7 +3331,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     const langBtn = document.getElementById('langToggleBtn');
     if (langBtn) langBtn.textContent = currentLang === 'zh' ? 'EN' : '中';
     // blessing cards
-    window.BLESSING_CARDS = L.blessingCards;
+    BLESSING_CARDS = L.blessingCards;
   }
 
   function toggleLang() {
