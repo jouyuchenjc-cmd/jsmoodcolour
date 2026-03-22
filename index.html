@@ -3436,6 +3436,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     container.innerHTML = '';
     const L = typeof getLang === 'function' ? getLang() : null;
     const isEn = currentLang === 'en';
+    const flowerNamesEN = ['Tulip','Plum Blossom','Cherry Blossom','Nemophila','Sunflower','Hydrangea','Daisy','Amaryllis','Daylily','Maple','Myrrh Flower','Iceland Poppy'];
+    const flowerNamesZH = ['鬱金香','梅花','櫻花','粉蝶花','向日葵','繡球花','小雛菊','孤挺花','金針花','楓葉','沒藥花','冰島罌粟'];
 
     // 月份花徽章
     const monthSection = document.createElement('div');
@@ -3494,8 +3496,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
         if (unlocked) {
           item.onclick = () => showBadgeDetail(
-            isEn ? `${monthName} ${yr} Bloom` : `${yr}年${m}月之花`,
-            isEn ? `You coloured ${yr} ${monthName} with 90%+ consistency.` : `你在 ${yr}年${m}月 完成了 90% 以上的記錄`,
+            isEn ? `${monthName} ${yr} · ${flowerNamesEN[m-1]}` : `${yr}年${m}月之花 · ${flowerNamesZH[m-1]}`,
+            isEn ? `You have coloured 90% of this month. Thank you for doing this for yourself.` : `謝謝你，幫自己紀錄了90% 的日子在這個月！`,
             badges[key].unlockedAt
           );
         }
@@ -3539,7 +3541,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       };
       if (unlocked) {
         item.onclick = () => showBadgeDetail(
-          isEn ? `${n} Days` : `恭喜你，已經上色了 ${n} 天了！`,
+          isEn ? `Congrats! ${n} Days Coloured!` : `恭喜你，已經上色了 ${n} 天了！`,
           isEn ? `Congrats, you've coloured ${n} days! ${msMsgMap[n].en}` : msMsgMap[n].zh,
           badges[key].unlockedAt
         );
