@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MY COLLECTION — Full Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Sulphur+Point:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #F3EEE8;
+    font-family: 'Sulphur Point', sans-serif;
+    min-height: 100vh;
+    padding: 60px 24px 80px;
+  }
+
+  .page {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #4D586F;
+  }
+
+  .close {
+    font-size: 20px;
+    color: #4D586F;
+    opacity: 0.4;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #4D586F;
+    opacity: 0.5;
+    margin-bottom: 14px;
+  }
+
+  .year-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .year-label {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: #4D586F;
+    opacity: 0.7;
+  }
+
+  .year-arrow {
+    font-size: 10px;
+    color: #4D586F;
+    opacity: 0.4;
+  }
+
+  .month-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge-img {
+    width: 78px;
+    height: 78px;
+    object-fit: contain;
+  }
+
+  .badge-label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: #4D586F;
+    opacity: 0.8;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid rgba(77,88,111,0.12);
+    margin: 28px 0 32px;
+  }
+
+  .milestone-grid {
+    display: flex;
+    gap: 14px;
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 48px;
+    font-size: 11px;
+    color: #8e8e8e;
+    letter-spacing: 0.08em;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="title">MY COLLECTION</div>
+    <div class="close">✕</div>
+  </div>
+
+  <!-- 月份區 -->
+  <div class="section-label">MONTHLY</div>
+
+  <div class="year-header">
+    <span class="year-label">2026</span>
+    <span class="year-arrow">▾</span>
+  </div>
+
+  <div class="month-grid">
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-02.svg" alt="Jan">
+      <span class="badge-label">Jan</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-03.svg" alt="Feb">
+      <span class="badge-label">Feb</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-04.svg" alt="Mar">
+      <span class="badge-label">Mar</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-05.svg" alt="Apr">
+      <span class="badge-label">Apr</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-06.svg" alt="May">
+      <span class="badge-label">May</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-07.svg" alt="Jun">
+      <span class="badge-label">Jun</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-08.svg" alt="Jul">
+      <span class="badge-label">Jul</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-09.svg" alt="Aug">
+      <span class="badge-label">Aug</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-10.svg" alt="Sep">
+      <span class="badge-label">Sep</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-11.svg" alt="Oct">
+      <span class="badge-label">Oct</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-12.svg" alt="Nov">
+      <span class="badge-label">Nov</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-13.svg" alt="Dec">
+      <span class="badge-label">Dec</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 里程碑區 -->
+  <div class="section-label">MILESTONES</div>
+  <div class="milestone-grid">
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-15.svg" alt="100d">
+      <span class="badge-label">100天</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-16.svg" alt="200d">
+      <span class="badge-label">200天</span>
+    </div>
+    <div class="badge-item">
+      <img class="badge-img" src="./badges/Collection-17.svg" alt="365d">
+      <span class="badge-label">365天</span>
+    </div>
+  </div>
+
+  <div class="footer">© 2026 Triple.Cell_illustration — 細胞日常插畫</div>
+</div>
+</body>
+</html>
