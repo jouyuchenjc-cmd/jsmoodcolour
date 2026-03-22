@@ -3496,9 +3496,10 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
         if (unlocked) {
           item.onclick = () => showBadgeDetail(
-            isEn ? `${monthName} ${yr} · ${flowerNamesEN[m-1]}` : `${yr}年${m}月之花 · ${flowerNamesZH[m-1]}`,
-            isEn ? `You have coloured 90% of this month. Thank you for doing this for yourself.` : `謝謝你，幫自己紀錄了90% 的日子在這個月！`,
-            badges[key].unlockedAt,
+            `${monthName}. ${yr}`,
+            isEn ? `Collected Badge: ${flowerNamesEN[m-1]}` : `恭喜你搜集到：${flowerNamesZH[m-1]}`,
+            isEn ? `Thank you, and congratulations —<br>you've recorded 90% of this month for yourself!` : `謝謝你，也恭喜你<br>已達成這個月幫自己紀錄了90%！`,
+            isEn ? `✦ Unlocked: ${badges[key].unlockedAt} ✦` : `✦ 解鎖日：${badges[key].unlockedAt} ✦`,
             String(m + 1).padStart(2, '0')
           );
         }
@@ -3536,15 +3537,16 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
         </div>
         <div style="font-family:'Sulphur Point',sans-serif;font-size:10px;letter-spacing:0.06em;color:#4D586F;opacity:${unlocked ? '0.8' : '0.3'};">${n}${isEn ? 'd' : '天'}</div>`;
       const msMsgMap = {
-        100: { zh: '點亮了燈！', en: 'You lit up the light!' },
-        200: { zh: '收集了月亮的圓缺', en: 'You collected the phases of the moon.' },
-        365: { zh: '喀嚓！紀錄日子吧！', en: 'Click! Keep recording your days!' }
+        100: { zhTitle: '第一個 100 天！', enTitle: 'Congrats! First 100 Days!', zhSub: '幫自己點亮了燈！', enSub: 'You lit up the light!', zhDesc: '恭喜你，已經上色了 100 天了！', enDesc: "Congrats, you've coloured 100 days!" },
+        200: { zhTitle: '200 天！', enTitle: 'Congrats! 200 Days!', zhSub: '幫自己收集了月亮的圓缺！', enSub: 'You collected the phases of the moon.', zhDesc: '恭喜你，已經上色了 200 天了！', enDesc: "Congrats, you've coloured 200 days!" },
+        365: { zhTitle: '365 天！', enTitle: 'Congrats! 365 Days!', zhSub: '喀嚓！紀錄日子吧！', enSub: 'Click! Keep recording your days!', zhDesc: '恭喜你，已經上色了 365 天了！', enDesc: "Congrats, you've coloured 365 days!" }
       };
       if (unlocked) {
         item.onclick = () => showBadgeDetail(
-          isEn ? `Congrats! ${n} Days Coloured!` : `恭喜你，已經上色了 ${n} 天了！`,
-          isEn ? `Congrats, you've coloured ${n} days! ${msMsgMap[n].en}` : msMsgMap[n].zh,
-          badges[key].unlockedAt,
+          isEn ? msMsgMap[n].enTitle : msMsgMap[n].zhTitle,
+          isEn ? `Collected Badge: ${msMsgMap[n].enSub}` : `Collected Badge: ${msMsgMap[n].zhSub}`,
+          isEn ? msMsgMap[n].enDesc : msMsgMap[n].zhDesc,
+          isEn ? `✦ Unlocked: ${badges[key].unlockedAt} ✦` : `✦ 解鎖日：${badges[key].unlockedAt} ✦`,
           msSvgMap[n]
         );
       }
@@ -3557,15 +3559,16 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     container.appendChild(milestonesSection);
   }
 
-  function showBadgeDetail(title, desc, date, svgIndex) {
+  function showBadgeDetail(title, subtitle, desc, date, svgIndex) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(60,55,48,0.4);backdrop-filter:blur(4px);z-index:600;display:flex;align-items:center;justify-content:center;padding:24px;';
     overlay.innerHTML = `
       <div style="background:#F3EEE8;border-radius:20px;padding:28px 24px;max-width:280px;width:100%;text-align:center;">
-        <div style="font-family:'Sulphur Point',sans-serif;font-size:16px;letter-spacing:0.08em;color:#4D586F;margin-bottom:14px;">${title}</div>
+        <div style="font-family:'Sulphur Point',sans-serif;font-size:16px;letter-spacing:0.08em;color:#4D586F;margin-bottom:6px;">${title}</div>
+        <div style="font-family:'Noto Sans TC','PingFang TC',sans-serif;font-size:12px;color:#D39266;letter-spacing:0.04em;margin-bottom:14px;">${subtitle}</div>
         ${svgIndex ? `<div style="display:flex;justify-content:center;margin-bottom:14px;"><img src="./badges/Collection-${svgIndex}.svg" alt="" style="width:96px;height:96px;object-fit:contain;"></div>` : ''}
-        <div style="font-family:'Noto Sans TC','PingFang TC',sans-serif;font-size:13px;line-height:1.7;color:#4D586F;opacity:0.7;margin-bottom:16px;">${desc}</div>
-        <div style="font-family:'Sulphur Point',sans-serif;font-size:11px;color:#4D586F;opacity:0.4;margin-bottom:20px;">✦ ${date} ✦</div>
+        <div style="font-family:'Noto Sans TC','PingFang TC',sans-serif;font-size:13px;line-height:1.7;color:#4D586F;opacity:0.7;margin-bottom:12px;">${desc}</div>
+        <div style="font-family:'Sulphur Point',sans-serif;font-size:11px;color:#4D586F;opacity:0.4;margin-bottom:20px;">${date}</div>
         <button onclick="this.parentElement.parentElement.remove()" style="background:#959fb0;border:none;border-radius:20px;padding:8px 24px;font-family:'Sulphur Point',sans-serif;font-size:11px;letter-spacing:0.1em;color:#fff;cursor:pointer;">OK</button>
       </div>`;
     overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
