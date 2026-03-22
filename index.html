@@ -1575,6 +1575,10 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     renderStreak();
     closeModalDirect();
     await writeToNotion(savedDate, savedMood, note);
+    const _newBadges = checkAndUnlockBadges();
+    if (_newBadges && _newBadges.length > 0) {
+      _newBadges.forEach(b => { if (b.type === 'month') setTimeout(() => showBadgeUnlocked(b.ym, b.y, b.m), 500); });
+    }
   }
 
   async function clearModal() {
@@ -3391,6 +3395,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       months[ym].push(d);
     });
 
+    const newlyUnlocked = [];
     Object.entries(months).forEach(([ym, dates]) => {
       const key = `month_${ym}`;
       if (badges[key]) return; // 已解鎖
@@ -3410,12 +3415,20 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       const monthEnd = new Date(y, m, 0);
       const isMonthComplete = today >= monthEnd;
 
+      // 15號截止規則：過了下個月15號就不能補填解鎖
+      const deadline = new Date(y, m, 15); // 下個月15號
+      const pastDeadline = today > deadline;
+      if (pastDeadline) return;
+
       if (isMonthComplete && recorded >= required) {
-        badges[key] = { unlockedAt: monthEnd.toISOString().slice(0,10), month: ym };
+        badges[key] = { unlockedAt: new Date().toISOString().slice(0,10), month: ym };
+        newlyUnlocked.push({ type: 'month', ym, y, m });
       }
     });
+    return newlyUnlocked;
 
     saveBadgeData(badges);
+    return typeof newlyUnlocked !== 'undefined' ? newlyUnlocked : [];
   }
 
   function renderBadges() {
@@ -3429,7 +3442,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
     // 月份花徽章
     const monthSection = document.createElement('div');
-    monthSection.innerHTML = `<div style="font-family:'Sulphur Point',sans-serif;font-size:11px;letter-spacing:0.12em;color:#4D586F;opacity:0.5;margin-bottom:12px;">${isEn ? 'MONTHLY BLOOMS' : '每月之花'}</div>`;
+    monthSection.innerHTML = `<div style="font-family:'Sulphur Point',sans-serif;font-size:11px;letter-spacing:0.12em;color:#4D586F;opacity:0.5;margin-bottom:12px;">${isEn ? 'MONTHLY' : '每月'}</div>`;
 
     // 按年份分組，預設最新年展開
     const today = new Date();
@@ -3473,11 +3486,12 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
         const unlocked = !!badges[key];
         const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1];
 
+        const svgIndex = unlocked ? String(m + 1).padStart(2, '0') : '01';
         const item = document.createElement('div');
         item.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;';
         item.innerHTML = `
-          <div style="width:56px;height:56px;border-radius:50%;background:${unlocked ? 'var(--happy)' : 'rgba(77,88,111,0.12)'};display:flex;align-items:center;justify-content:center;font-size:24px;transition:all 0.2s;">
-            ${unlocked ? '🌸' : '○'}
+          <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;opacity:${unlocked ? '1' : '0.35'};">
+            <img src="./badges/Collection-${svgIndex}.svg" alt="" style="width:52px;height:52px;object-fit:contain;">
           </div>
           <div style="font-family:'Sulphur Point',sans-serif;font-size:10px;letter-spacing:0.06em;color:#4D586F;opacity:${unlocked ? '0.8' : '0.3'};">${monthName}</div>`;
 
@@ -3509,14 +3523,16 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     const msGrid = document.createElement('div');
     msGrid.style.cssText = 'display:flex;gap:12px;';
 
+    const msSvgMap = { 100: '15', 200: '16', 365: '17' };
     [100, 200, 365].forEach(n => {
       const key = `days_${n}`;
       const unlocked = !!badges[key];
+      const svgIndex = unlocked ? msSvgMap[n] : '14';
       const item = document.createElement('div');
       item.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;';
       item.innerHTML = `
-        <div style="width:56px;height:56px;border-radius:50%;background:${unlocked ? '#D39266' : 'rgba(77,88,111,0.12)'};display:flex;align-items:center;justify-content:center;font-size:22px;transition:all 0.2s;">
-          ${unlocked ? '✦' : '○'}
+        <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;opacity:${unlocked ? '1' : '0.35'};">
+          <img src="./badges/Collection-${svgIndex}.svg" alt="" style="width:52px;height:52px;object-fit:contain;">
         </div>
         <div style="font-family:'Sulphur Point',sans-serif;font-size:10px;letter-spacing:0.06em;color:#4D586F;opacity:${unlocked ? '0.8' : '0.3'};">${n}${isEn ? 'd' : '天'}</div>`;
       if (unlocked) {
@@ -3549,6 +3565,31 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     document.body.appendChild(overlay);
   }
 
+  function showBadgeUnlocked(ym, y, m) {
+    const isEn = currentLang === 'en';
+    const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1];
+    const flowerNames = ['Tulip','','','','','','','','','','','Iceland Poppy'];
+    const flowerNamesZH = ['鬱金香','','','','','','','','','','','冰島罌粟'];
+    const svgIndex = String(m + 1).padStart(2, '0');
+    const title = `${monthName} ${y}`;
+    const msg = isEn
+      ? `You have coloured 90% of this month. Thank you for doing this for yourself.`
+      : `謝謝你，幫自己紀錄了90% 的日子在這個月！`;
+    const series = isEn ? `✦ ${y} Bloom Series ✦` : `✦ ${y} 是花系列 ✦`;
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(60,55,48,0.4);backdrop-filter:blur(4px);z-index:700;display:flex;align-items:center;justify-content:center;padding:24px;';
+    overlay.innerHTML = `
+      <div style="background:#F3EEE8;border-radius:20px;padding:32px 24px;max-width:300px;width:100%;text-align:center;animation:blessingFadeIn 0.3s ease;">
+        <div style="display:flex;justify-content:center;margin-bottom:12px;"><img src="./badges/Collection-${svgIndex}.svg" alt="" style="width:64px;height:64px;object-fit:contain;"></div>
+        <div style="font-family:'Sulphur Point',sans-serif;font-size:18px;letter-spacing:0.08em;color:#4D586F;margin-bottom:14px;">${title}</div>
+        <div style="font-family:'Noto Sans TC','PingFang TC',sans-serif;font-size:13px;line-height:1.8;color:#4D586F;opacity:0.75;margin-bottom:14px;">${msg}</div>
+        <div style="font-family:'Sulphur Point',sans-serif;font-size:11px;color:#D39266;letter-spacing:0.08em;margin-bottom:24px;">${series}</div>
+        <button onclick="this.parentElement.parentElement.remove()" style="background:#D39266;border:none;border-radius:20px;padding:8px 28px;font-family:'Sulphur Point',sans-serif;font-size:11px;letter-spacing:0.1em;color:#fff;cursor:pointer;">✦</button>
+      </div>`;
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  }
   function openBadges() {
     renderBadges();
     document.getElementById('badgesOverlay').style.display = 'block';
