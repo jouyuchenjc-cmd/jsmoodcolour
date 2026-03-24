@@ -3442,54 +3442,73 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
     // 月份花徽章 — 全部 12 個月固定展示
     const monthSection = document.createElement('div');
-    monthSection.innerHTML = `<div style="font-family:'Sulphur Point',sans-serif;font-size:11px;letter-spacing:0.12em;color:#4D586F;opacity:0.5;margin-bottom:14px;">${isEn ? 'MONTHLY' : '每月'}</div>`;
+    monthSection.innerHTML = `<div style="font-family:'Sulphur Point',sans-serif;font-size:11px;letter-spacing:0.12em;color:#4D586F;opacity:0.5;margin-bottom:12px;">${isEn ? 'MONTHLY' : '每月'}</div>`;
 
     const today = new Date();
-    const thisYear = today.getFullYear();
     const monthSvgMap = {'01':'02','02':'03','03':'04','04':'05','05':'06','06':'07','07':'08','08':'09','09':'10','10':'11','11':'12','12':'13'};
     const flowerNamesEN = ['Tulip','Plum Blossom','Cherry Blossom','Nemophila','Sunflower','Hydrangea','Daisy','Amaryllis','Daylily','Maple','Myrrh Flower','Iceland Poppy'];
     const flowerNamesZH = ['鬱金香','梅花','櫻花','粉蝶花','向日葵','繡球花','小雛菊','孤挺花','金針花','楓葉','沒藥花','冰島罌粟'];
     const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    const monthGrid = document.createElement('div');
-    monthGrid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:16px;';
+    const allMoodDates = Object.keys(moodData).sort();
+    const startYM = allMoodDates[0] ? allMoodDates[0].slice(0,7) : today.toISOString().slice(0,7);
+    const startDate = new Date(startYM + '-01');
+    const startYear = startDate.getFullYear();
+    const endYear = today.getFullYear();
 
-    for (let m = 1; m <= 12; m++) {
-      const moNum = String(m).padStart(2,'0');
-      const monthName = MONTH_NAMES[m-1];
-      // 找任何年份有無解鎖此月
-      const unlockedEntry = Object.entries(badges).find(([k]) => k.startsWith('month_') && k.endsWith('-' + moNum));
-      const unlocked = !!unlockedEntry;
-      const unlockedKey = unlockedEntry ? unlockedEntry[0] : null;
-      const unlockedYr = unlockedKey ? unlockedKey.slice(6, 10) : null;
-      const svgFile = unlocked ? (monthSvgMap[moNum] || '02') : null;
+    for (let yr = endYear; yr >= startYear; yr--) {
+      const isCurrentYear = yr === endYear;
+      const yearWrap = document.createElement('div');
+      yearWrap.style.marginBottom = '16px';
 
-      const item = document.createElement('div');
-      item.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;cursor:' + (unlocked ? 'pointer' : 'default') + ';';
+      const yearHeader = document.createElement('div');
+      yearHeader.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;';
+      yearHeader.innerHTML = `
+        <span style="font-family:'Sulphur Point',sans-serif;font-size:13px;letter-spacing:0.08em;color:#4D586F;opacity:0.7;">${yr}</span>
+        <span id="yr-arrow-${yr}" style="font-size:10px;color:#4D586F;opacity:0.4;">${isCurrentYear ? '▾' : '▸'}</span>`;
 
-      if (unlocked) {
+      const monthGrid = document.createElement('div');
+      monthGrid.id = `yr-grid-${yr}`;
+      monthGrid.style.cssText = `display:${isCurrentYear ? 'grid' : 'none'};grid-template-columns:repeat(3,1fr);gap:16px;`;
+
+      yearHeader.onclick = () => {
+        const grid = document.getElementById(`yr-grid-${yr}`);
+        const arrow = document.getElementById(`yr-arrow-${yr}`);
+        const open = grid.style.display !== 'none';
+        grid.style.display = open ? 'none' : 'grid';
+        arrow.textContent = open ? '▸' : '▾';
+      };
+
+      for (let m = 1; m <= 12; m++) {
+        const moNum = String(m).padStart(2,'0');
+        const monthName = MONTH_NAMES[m-1];
+        const key = `month_${yr}-${moNum}`;
+        const unlocked = !!badges[key];
+        const svgFile = unlocked ? (monthSvgMap[moNum] || '02') : '01';
+
+        const item = document.createElement('div');
+        item.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;cursor:' + (unlocked ? 'pointer' : 'default') + ';';
         item.innerHTML = `
           <div style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
-            <img src="./badges/Collection-${svgFile}.svg" style="width:88%;height:88%;object-fit:contain;">
+            <img src="./badges/Collection-${svgFile}.svg" style="width:88%;height:88%;object-fit:contain;opacity:${unlocked ? '1' : '0.35'};">
           </div>
-          <div style="font-family:'Sulphur Point',sans-serif;font-size:10px;letter-spacing:0.06em;color:#4D586F;opacity:0.8;">${monthName}</div>`;
-        item.onclick = () => showBadgeDetail(
-          `${monthName}. ${unlockedYr}`,
-          isEn ? `Collected Badge: ${flowerNamesEN[m-1]}` : `恭喜你搜集到：${flowerNamesZH[m-1]}`,
-          isEn ? `Thank you, and congratulations —<br>you've recorded 90% of this month for yourself!` : `謝謝你，也恭喜你<br>已達成這個月幫自己紀錄了90%！`,
-          isEn ? `✦ Unlocked: ${badges[unlockedKey].unlockedAt} ✦` : `✦ 解鎖日：${badges[unlockedKey].unlockedAt} ✦`,
-          svgFile
-        );
-      } else {
-        item.innerHTML = `
-          <div style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
-            <img src="./badges/Collection-01.svg" style="width:88%;height:88%;object-fit:contain;opacity:0.35;">
-          </div>
-          <div style="font-family:'Sulphur Point',sans-serif;font-size:10px;letter-spacing:0.06em;color:#4D586F;opacity:0.25;">${monthName}</div>`;
+          <div style="font-family:'Sulphur Point',sans-serif;font-size:10px;letter-spacing:0.06em;color:#4D586F;opacity:${unlocked ? '0.8' : '0.25'};">${monthName}</div>`;
+
+        if (unlocked) {
+          item.onclick = () => showBadgeDetail(
+            `${monthName}. ${yr}`,
+            isEn ? `Collected Badge: ${flowerNamesEN[m-1]}` : `恭喜你搜集到：${flowerNamesZH[m-1]}`,
+            isEn ? `Thank you, and congratulations —<br>you've recorded 90% of this month for yourself!` : `謝謝你，也恭喜你<br>已達成這個月幫自己紀錄了90%！`,
+            isEn ? `✦ Unlocked: ${badges[key].unlockedAt} ✦` : `✦ 解鎖日：${badges[key].unlockedAt} ✦`,
+            svgFile
+          );
+        }
+        monthGrid.appendChild(item);
       }
-      monthGrid.appendChild(item);
+      yearWrap.appendChild(yearHeader);
+      yearWrap.appendChild(monthGrid);
+      monthSection.appendChild(yearWrap);
     }
-    monthSection.appendChild(monthGrid);
     container.appendChild(monthSection);
 
     // 分隔線
