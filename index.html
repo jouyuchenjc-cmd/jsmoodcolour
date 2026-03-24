@@ -3486,13 +3486,13 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
         const unlocked = !!badges[key];
         const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1];
     const _moNum = String(m).padStart(2,'0');
-    const _svgMap = {'01':'02','02':'03','03':'04','04':'05','05':'06','06':'07','07':'08','08':'09','09':'10','10':'11','11':'16','12':'12'};
+    const _svgMap = {'01':'02','02':'03','03':'04','04':'05','05':'06','06':'07','07':'08','08':'09','09':'10','10':'11','11':'12','12':'13'};
     const _svgFile = _svgMap[_moNum] || '01';
 
         const item = document.createElement('div');
         item.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;';
         const moNum = String(m).padStart(2,'0');
-        const monthSvgMap = {'01':'02','02':'03','03':'04','04':'05','05':'06','06':'07','07':'08','08':'09','09':'10','10':'11','11':'16','12':'12'};
+        const monthSvgMap = {'01':'02','02':'03','03':'04','04':'05','05':'06','06':'07','07':'08','08':'09','09':'10','10':'11','11':'12','12':'13'};
         const svgFile = unlocked ? (monthSvgMap[moNum] || '01') : '01';
         item.innerHTML = `
           <div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;">
@@ -3531,8 +3531,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     [100, 200, 365].forEach(n => {
       const key = `days_${n}`;
       const unlocked = !!badges[key];
-      const msSvgMap = {100:'14', 200:'15', 365:'17'};
-      const msSvgFile = unlocked ? (msSvgMap[n] || '13') : '13';
+      const msSvgMap = {100:'15', 200:'16', 365:'17'};
+      const msSvgFile = unlocked ? (msSvgMap[n] || '14') : '14';
       const item = document.createElement('div');
       item.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;';
       item.innerHTML = `
@@ -3574,13 +3574,15 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     const isEn = currentLang === 'en';
     const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1];
     const _moNum = String(m).padStart(2,'0');
-    const _svgMap = {'01':'02','02':'03','03':'04','04':'05','05':'06','06':'07','07':'08','08':'09','09':'10','10':'11','11':'16','12':'12'};
+    const _svgMap = {'01':'02','02':'03','03':'04','04':'05','05':'06','06':'07','07':'08','08':'09','09':'10','10':'11','11':'12','12':'13'};
     const _svgFile = _svgMap[_moNum] || '01';
     const title = `${monthName} ${y}`;
     const msg = isEn
       ? `You have coloured 90% of this month. Thank you for doing this for yourself.`
       : `謝謝你，幫自己紀錄了90% 的日子在這個月！`;
-    const series = isEn ? `✦ ${y} Bloom Series: Tulip ✦` : `✦ ${y} 是花系列：鬱金香 ✦`;
+    const _flowerZh = ['鬱金香','梅花','櫻花','粉蝶花','向日葵','繡球花','小雛菊','孤挺花','金針花','楓葉','沒藥花','冰島罌粟'][m-1] || '';
+    const _flowerEn = ['Tulip','Plum Blossom','Sakura','Nemophila','Sunflower','Hydrangea','Daisy','Amaryllis','Daylily','Maple','Myrrh Flower','Iceland Poppy'][m-1] || '';
+    const series = isEn ? `✦ ${y} Bloom Series: ${_flowerEn} ✦` : `✦ ${y} 是花系列：${_flowerZh} ✦`;
 
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(60,55,48,0.4);backdrop-filter:blur(4px);z-index:700;display:flex;align-items:center;justify-content:center;padding:24px;';
@@ -3624,7 +3626,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     const MONTH_ZH = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
     const FLOWER_NAMES_ZH = ['鬱金香','梅花','櫻花','粉蝶花','向日葵','繡球花','小雛菊','孤挺花','金針花','楓葉','沒藥花','冰島罌粟'];
     const FLOWER_NAMES_EN = ['Tulip','Plum Blossom','Sakura','Nemophila','Sunflower','Hydrangea','Daisy','Amaryllis','Daylily','Maple','Myrrh Flower','Iceland Poppy'];
-    const SVG_MAP = {'01':'02','02':'03','03':'04','04':'05','05':'06','06':'07','07':'08','08':'09','09':'10','10':'11','11':'16','12':'12'};
+    const SVG_MAP = {'01':'02','02':'03','03':'04','04':'05','05':'06','06':'07','07':'08','08':'09','09':'10','10':'11','11':'12','12':'13'};
+    // 四個一排
 
     // 標題
     const title = document.createElement('div');
@@ -3639,7 +3642,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     section.appendChild(monthLabel);
 
     const monthGrid = document.createElement('div');
-    monthGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:14px;margin-bottom:28px;';
+    monthGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px;';
 
     for (let m = 1; m <= 12; m++) {
       const moNum = String(m).padStart(2,'0');
@@ -3648,7 +3651,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       const hasUnlocked = Object.keys(badges).some(k => k.startsWith('month_') && k.endsWith('-' + moNum));
 
       const item = document.createElement('div');
-      item.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:5px;';
+      item.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:5px;width:calc(25% - 8px);';
       item.innerHTML = `
         <img src="./badges/Collection-${svgFile}.svg" style="width:52px;height:52px;object-fit:contain;">
         <div style="font-family:Sulphur Point,sans-serif;font-size:9px;letter-spacing:0.05em;color:#4D586F;opacity:0.7;">${isEn ? FLOWER_NAMES_EN[m-1] : FLOWER_NAMES_ZH[m-1]}</div>
@@ -3669,10 +3672,10 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     section.appendChild(msLabel);
 
     const msGrid = document.createElement('div');
-    msGrid.style.cssText = 'display:flex;gap:14px;';
+    msGrid.style.cssText = 'display:flex;gap:16px;';
     const MS_DATA = [
-      {n:100, svg:'14', nameZh:'點亮了燈！', nameEn:'Light it up!'},
-      {n:200, svg:'15', nameZh:'收集了月亮的圓缺', nameEn:'Moon phases'},
+      {n:100, svg:'15', nameZh:'點亮了燈！', nameEn:'Light it up!'},
+      {n:200, svg:'16', nameZh:'收集了月亮的圓缺', nameEn:'Moon phases'},
       {n:365, svg:'17', nameZh:'喀嚓！紀錄日子吧！', nameEn:'365 clicks!'},
     ];
     const totalDays = Object.keys(moodData).length;
