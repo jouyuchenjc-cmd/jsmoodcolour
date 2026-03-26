@@ -3403,32 +3403,26 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       const [y, m] = ym.split('-').map(Number);
       const daysInMonth = new Date(y, m, 0).getDate();
 
-      // 找這個月的第一筆記錄日
+      // 從這個月第一筆記錄日算起
       const firstInMonth = dates[0];
       const firstDay = parseInt(firstInMonth.slice(8,10));
       const eligibleDays = daysInMonth - firstDay + 1;
       const required = Math.ceil(eligibleDays * 0.9);
       const recorded = dates.length;
 
-      // 只算到今天（不算未來）
+      // 月份已結束才能解鎖
       const today = new Date();
       const monthEnd = new Date(y, m, 0);
       const isMonthComplete = today >= monthEnd;
-
-      // 15號截止規則：過了下個月15號就不能補填解鎖
-      const deadline = new Date(y, m, 15); // 下個月15號
-      const pastDeadline = today > deadline;
-      if (pastDeadline) return;
 
       if (isMonthComplete && recorded >= required) {
         badges[key] = { unlockedAt: new Date().toISOString().slice(0,10), month: ym };
         newlyUnlocked.push({ type: 'month', ym, y, m });
       }
     });
-    return newlyUnlocked;
 
     saveBadgeData(badges);
-    return typeof newlyUnlocked !== 'undefined' ? newlyUnlocked : [];
+    return newlyUnlocked;
   }
 
   function renderBadges() {
