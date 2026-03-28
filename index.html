@@ -1537,6 +1537,14 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     await writeToNotion(todayStr, selectedMood, note);
     msg.textContent = notionSettings.apiKey ? '已儲存 + 同步 Notion ✓' : '已儲存 ✓';
     setTimeout(() => msg.classList.remove('show'), 2500);
+    const _newBadges = checkAndUnlockBadges();
+    if (_newBadges && _newBadges.length > 0) {
+      _newBadges.forEach((b, i) => {
+        const delay = 800 + i * 800;
+        if (b.type === 'month') setTimeout(() => showBadgeUnlocked(b.ym, b.y, b.m), delay);
+        if (b.type === 'milestone') setTimeout(() => showBadgeMilestone(b.n), delay);
+      });
+    }
   }
 
   // ── Modal ──
