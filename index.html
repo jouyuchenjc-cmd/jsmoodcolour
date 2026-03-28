@@ -3709,5 +3709,12 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
   </div>
 </div>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>
