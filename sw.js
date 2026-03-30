@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moodgrid-notion-v1';
+const CACHE_NAME = 'moodgrid-notion-v2';
 const ASSETS = [
   './mood-grid-notion-25.html',
   'https://fonts.googleapis.com/css2?family=Sulphur+Point:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap',
