@@ -1,188 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <link rel="apple-touch-icon" href="icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Colour of Day">
-  <meta name="theme-color" content="#F3EEE8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="細胞日常">
-<meta name="theme-color" content="#F3EEE8">
-<meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="細胞日常">
+  <meta name="theme-color" content="#F3EEE8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" href="./icon.png">
+  <link rel="apple-touch-icon" href="./icon.png">
+  <link rel="manifest" href="./manifest.json">
   <title>The Colour of Your Day.</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js">  function toggleChartMode() {
-    chartMode = !chartMode;
-    const btn = document.getElementById('chartToggleBtn');
-    // Button label shows what you'll switch TO (i.e. the other mode)
-    btn.textContent = chartMode ? '▦ GRID' : '～ CHART';
-    document.getElementById('gridContainer').style.display = chartMode ? 'none' : '';
-    document.getElementById('statsBar').style.display = chartMode ? 'none' : '';
-    document.getElementById('chartContainer').style.display = chartMode ? 'block' : 'none';
-    if (chartMode) renderChart();
-  }
-
-  function getMonthsForView() {
-    const now = new Date();
-    const months = [];
-    if (currentView === 'quarter') {
-      // current quarter: 3 months
-      const _curQ = Math.floor(now.getMonth()/3);
-      const _tQ = _curQ + viewOffset;
-      const _yearsOff1 = Math.floor(_tQ / 4);
-      const _qInYear1 = ((_tQ % 4) + 4) % 4;
-      const _qYear = now.getFullYear() + _yearsOff1;
-      const qStart = _qInYear1 * 3;
-      for (let i = 0; i < 3; i++) {
-        const d = new Date(_qYear, qStart + i, 1);
-        months.push({ year: d.getFullYear(), month: d.getMonth() });
-      }
-    } else {
-      // year: all 12 months of current year + viewOffset years
-      const yr = now.getFullYear() + viewOffset;
-      for (let m = 0; m < 12; m++) {
-        months.push({ year: yr, month: m });
-      }
-    }
-    return months;
-  }
-
-  function renderChart() {
-    const container = document.getElementById('chartContainer');
-    container.innerHTML = '';
-
-    // 更新 navLabel 和 gridLabel
-    const _navLabel = document.getElementById('navLabel');
-    const _gridLabel = document.getElementById('gridLabel');
-    const _now = new Date();
-    if (currentView === 'quarter') {
-      const _curQ = Math.floor(_now.getMonth()/3);
-      const _tQ = _curQ + viewOffset;
-      const _yearsOff = Math.floor(_tQ/4);
-      const _qInYear = ((_tQ%4)+4)%4;
-      const _qYear = _now.getFullYear() + _yearsOff;
-      const _qLabel = `Q${_qInYear+1}`;
-      if (_navLabel) _navLabel.textContent = `${_qLabel} ${_qYear}`;
-      if (_gridLabel) _gridLabel.textContent = _qLabel;
-    } else if (currentView === 'year') {
-      const _yr = `${_now.getFullYear() + viewOffset}`;
-      if (_navLabel) _navLabel.textContent = _yr;
-      if (_gridLabel) _gridLabel.textContent = _yr;
-    }
-
-    const months = getMonthsForView();
-    const MOODS = ['happy','sad','neutral','unrecorded'];
-    const COLORS = {
-      happy:      'rgba(242,203,134,0.9)',
-      sad:        'rgba(172,138,138,0.85)',
-      neutral:    'rgba(180,190,200,0.8)',
-      unrecorded: 'rgba(220,229,239,0.2)',
-    };
-    const _CL = (typeof getLang === 'function') ? getLang() : { happy:'開心', sad:'不開心', neutral:'沒感覺', unrecorded:'未記錄' };
-    const LABELS = { happy:_CL.happy, sad:_CL.sad, neutral:_CL.neutral, unrecorded:_CL.unrecorded };
-
-    // Build data per month
-    const data = { happy:[], sad:[], neutral:[], unrecorded:[] };
-    const xLabels = [];
-    const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-    months.forEach(({ year, month }) => {
-      xLabels.push(MONTH_NAMES[month]);
-      const daysInMonth = new Date(year, month+1, 0).getDate();
-      const counts = { happy:0, sad:0, neutral:0, unrecorded:0 };
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const mood = moodData[dateStr]?.mood || '';
-        if (mood === 'happy') counts.happy++;
-        else if (mood === 'sad') counts.sad++;
-        else if (mood === 'mixed') { counts.happy += 0.5; counts.sad += 0.5; }
-        else if (mood === 'neutral') counts.neutral++;
-        else counts.unrecorded++;
-      }
-      const total = daysInMonth;
-      MOODS.forEach(m => data[m].push(Math.round(counts[m] / total * 100)));
-    });
-
-    // Canvas
-    const W = container.clientWidth || 340;
-    const H = 200;
-    const canvas = document.createElement('canvas');
-    canvas.width = W * 2; canvas.height = H * 2;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    container.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-    ctx.scale(2, 2);
-
-    const PAD_L = 36, PAD_R = 16, PAD_T = 16, PAD_B = 32;
-    const cW = W - PAD_L - PAD_R;
-    const cH = H - PAD_T - PAD_B;
-    const n = months.length;
-
-    // Y axis gridlines
-    ctx.strokeStyle = 'rgba(220,229,239,0.08)';
-    ctx.lineWidth = 1;
-    [0,25,50,75,100].forEach(pct => {
-      const y = PAD_T + cH - (pct/100)*cH;
-      ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(PAD_L+cW, y); ctx.stroke();
-      ctx.fillStyle = 'rgba(220,229,239,0.3)';
-      ctx.font = '8px Sulphur Point, sans-serif';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(pct+'%', 0, y);
-    });
-
-    // X axis labels
-    ctx.fillStyle = 'rgba(220,229,239,0.45)';
-    ctx.font = '9px Sulphur Point, sans-serif';
-    ctx.textBaseline = 'top';
-    xLabels.forEach((lbl, i) => {
-      const x = PAD_L + (i / (n-1 || 1)) * cW;
-      ctx.textAlign = 'center';
-      ctx.fillText(lbl, x, H - PAD_B + 6);
-    });
-
-    // Draw lines
-    MOODS.forEach(mood => {
-      const pts = data[mood];
-      ctx.beginPath();
-      ctx.strokeStyle = COLORS[mood];
-      ctx.lineWidth = mood === 'unrecorded' ? 1 : 2;
-      ctx.setLineDash(mood === 'unrecorded' ? [3,3] : []);
-      pts.forEach((pct, i) => {
-        const x = PAD_L + (i / (n-1 || 1)) * cW;
-        const y = PAD_T + cH - (pct/100)*cH;
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-
-      // Dots
-      pts.forEach((pct, i) => {
-        const x = PAD_L + (i / (n-1 || 1)) * cW;
-        const y = PAD_T + cH - (pct/100)*cH;
-        ctx.beginPath();
-        ctx.arc(x, y, mood === 'unrecorded' ? 2 : 3, 0, Math.PI*2);
-        ctx.fillStyle = COLORS[mood];
-        ctx.fill();
-      });
-    });
-    ctx.setLineDash([]);
-
-    // Legend
-    const legend = document.createElement('div');
-    legend.className = 'chart-legend';
-    MOODS.forEach(mood => {
-      const item = document.createElement('div');
-      item.className = 'chart-legend-item';
-      item.innerHTML = `<div class="chart-legend-dot" style="background:${COLORS[mood]}"></div>${LABELS[mood]}`;
-      legend.appendChild(item);
-    });
-    container.appendChild(legend);
-  }
-
-  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sulphur+Point:wght@300;400;700&family=Noto+Sans+JP:wght@300;400;500&display=swap');
 
@@ -1083,7 +914,7 @@
   <!-- Notion 設定 Panel -->
   <div class="settings-panel" id="settingsPanel">
     <div class="settings-title">
-      <span>⚙</span> Notion 設定
+      <span>⚙</span> <span id="settingsTitleText">Notion 設定</span>
     </div>
     <div class="settings-grid">
       <div class="settings-field">
@@ -1096,13 +927,13 @@
       </div>
     </div>
     <div class="settings-actions">
-      <button class="settings-save-btn" onclick="saveSettings()">儲存設定</button>
-      <button class="settings-test-btn" onclick="testConnection()">測試連線</button>
-      <button class="settings-sync-btn" onclick="syncFromNotion()">⇄ 從 Notion 同步</button>
-      <button class="settings-sync-btn" onclick="pushAllToNotion()">↑ 推送全部到 Notion</button>
+      <button class="settings-save-btn" id="settingsSaveBtn" onclick="saveSettings()">儲存設定</button>
+      <button class="settings-test-btn" id="settingsTestBtn" onclick="testConnection()">測試連線</button>
+      <button class="settings-sync-btn" id="settingsSyncFromBtn" onclick="syncFromNotion()">⇄ 從 Notion 同步</button>
+      <button class="settings-sync-btn" id="settingsPushAllBtn" onclick="pushAllToNotion()">↑ 推送全部到 Notion</button>
       <span class="settings-msg" id="settingsMsg"></span>
     </div>
-    <div class="settings-note">
+    <div class="settings-note" id="settingsNote">
       ① 前往 notion.so/my-integrations 建立 Integration，複製 API Key<br>
       ② 在 Notion 資料庫頁面右上角 → ··· → 連結至整合<br>
       ③ 資料庫欄位需包含：<strong>Date</strong>（日期）、<strong>Mood</strong>（選擇）、<strong>Note</strong>（文字）、<strong>Name</strong>（標題）<br>
@@ -1118,7 +949,10 @@
         <button class="tab" onclick="switchView('quarter')">季</button>
         <button class="tab" onclick="switchView('year')">年</button>
       </div>
-      <button id="chartToggleBtn" onclick="toggleChartMode()" style="display:none;background:none;border:1px solid #4a5568;color:#898989;font-size:11px;font-family:'Sulphur Point',sans-serif;letter-spacing:0.08em;padding:5px 0 3px;border-radius:20px;cursor:pointer;transition:all 0.2s;width:90px;text-align:center;line-height:1.4;">～ CHART</button>
+      <div style="display:flex;gap:6px;">
+        <button id="chartToggleBtn" onclick="toggleChartMode()" style="display:none;background:none;border:1px solid #4a5568;color:#898989;font-size:11px;font-family:'Sulphur Point',sans-serif;letter-spacing:0.08em;padding:5px 0 3px;border-radius:20px;cursor:pointer;transition:all 0.2s;width:90px;text-align:center;line-height:1.4;">～ CHART</button>
+        <button id="yearReviewBtn" onclick="openYearReview()" style="display:none;background:none;border:1px solid #4a5568;color:#898989;font-size:11px;font-family:'Sulphur Point',sans-serif;letter-spacing:0.08em;padding:5px 0 3px;border-radius:20px;cursor:pointer;transition:all 0.2s;width:90px;text-align:center;line-height:1.4;">✦ WRAP</button>
+      </div>
     </div>
     <!-- Cell Animation Scene -->
     <div id="cell-scene" style="display:none;align-items:center;pointer-events:none;flex-shrink:0;margin-right:45px;">
@@ -1159,6 +993,19 @@
         <p id="blessingText" style="font-family:'Noto Sans TC','PingFang TC',sans-serif;font-size:14px;line-height:1.85;color:#4D586F;margin:0 0 20px;letter-spacing:0.03em;"></p>
         <div style="display:flex;justify-content:center;padding-bottom:4px;">
           <button onclick="saveCardAsImage()" style="background:#959fb0;border:none;border-radius:20px;padding:8px 22px;font-family:'Sulphur Point',sans-serif;font-size:10px;letter-spacing:0.1em;color:#fff;cursor:pointer;" onmouseenter="this.style.background='#7f8fa3'" onmouseleave="this.style.background='#959fb0'">↓ 歡迎下載這張卡片</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 年度回顧 Modal -->
+  <div id="yearReviewOverlay" onclick="closeYearReview(event)" style="display:none;position:fixed;inset:0;background:rgba(60,55,48,0.45);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:24px;">
+    <div id="yearReviewCard" style="background:#F3EEE8;border-radius:24px;width:100%;max-width:320px;overflow:hidden;box-shadow:0 8px 40px rgba(60,55,48,0.18);display:flex;flex-direction:column;animation:blessingFadeIn 0.3s ease;position:relative;">
+      <button onclick="closeYearReviewDirect()" style="position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;border:none;background:#8e8e8e;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;z-index:10;" onmouseenter="this.style.background='#707070'" onmouseleave="this.style.background='#8e8e8e'">✕</button>
+      <div id="yearReviewCanvasWrap" style="width:100%;background:#F3EEE8;"></div>
+      <div style="padding:20px 28px 24px;">
+        <div style="display:flex;justify-content:center;">
+          <button id="yearReviewSaveBtn" onclick="saveYearReviewAsImage()" style="background:#959fb0;border:none;border-radius:20px;padding:8px 22px;font-family:'Sulphur Point',sans-serif;font-size:10px;letter-spacing:0.1em;color:#fff;cursor:pointer;" onmouseenter="this.style.background='#7f8fa3'" onmouseleave="this.style.background='#959fb0'">↓ 分享 / 下載</button>
         </div>
       </div>
     </div>
@@ -1345,7 +1192,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     notionSettings.apiKey = document.getElementById('notionApiKey').value.trim();
     notionSettings.dbId = document.getElementById('notionDbId').value.trim();
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(notionSettings)); } catch(e) {}
-    setSettingsMsg('已儲存 ✓', false);
+    setSettingsMsg(currentLang === 'en' ? 'Saved ✓' : '已儲存 ✓', false);
     updateNotionStatus('idle');
   }
 
@@ -1357,17 +1204,19 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   }
 
   async function testConnection() {
+    const isEn = currentLang === 'en';
     if (!notionSettings.apiKey || !notionSettings.dbId) {
-      setSettingsMsg('請先填入 API Key 和 Database ID', true); return;
+      setSettingsMsg(isEn ? 'Please fill in the API Key and Database ID first' : '請先填入 API Key 和 Database ID', true); return;
     }
-    setSettingsMsg('測試中...', false);
+    setSettingsMsg(isEn ? 'Testing...' : '測試中...', false);
     updateNotionStatus('syncing');
     try {
       const db = await notionRequest('GET', `/databases/${notionSettings.dbId}`);
-      setSettingsMsg(`✓ 連線成功！資料庫：${db.title?.[0]?.plain_text || '無標題'}`, false);
+      const title = db.title?.[0]?.plain_text || (isEn ? 'Untitled' : '無標題');
+      setSettingsMsg(isEn ? `✓ Connected! Database: ${title}` : `✓ 連線成功！資料庫：${title}`, false);
       updateNotionStatus('connected');
     } catch(e) {
-      setSettingsMsg(`✗ 失敗：${e.message}`, true);
+      setSettingsMsg(isEn ? `✗ Failed: ${e.message}` : `✗ 失敗：${e.message}`, true);
       updateNotionStatus('error');
     }
   }
@@ -1375,19 +1224,20 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   function updateNotionStatus(state) {
     const dot = document.getElementById('notionDot');
     const txt = document.getElementById('notionStatusText');
+    const isEn = currentLang === 'en';
     dot.className = 'notion-dot';
-    if (state === 'connected') { dot.classList.add('connected'); txt.textContent = 'Notion 已連線'; }
-    else if (state === 'syncing') { dot.classList.add('syncing'); txt.textContent = '同步中...'; }
-    else if (state === 'error') { dot.classList.add('error'); txt.textContent = 'Notion 連線失敗'; }
+    if (state === 'connected') { dot.classList.add('connected'); txt.textContent = isEn ? 'Notion connected' : 'Notion 已連線'; }
+    else if (state === 'syncing') { dot.classList.add('syncing'); txt.textContent = isEn ? 'Syncing...' : '同步中...'; }
+    else if (state === 'error') { dot.classList.add('error'); txt.textContent = isEn ? 'Notion connection failed' : 'Notion 連線失敗'; }
     else {
-      txt.textContent = notionSettings.apiKey ? 'Notion 已設定' : 'Notion 未設定';
+      txt.textContent = notionSettings.apiKey ? (isEn ? 'Notion configured' : 'Notion 已設定') : (isEn ? 'Notion not configured' : 'Notion 未設定');
       if (notionSettings.apiKey) dot.classList.add('connected');
     }
   }
 
   // ── 寫入 Notion ──
   async function writeToNotion(dateStr, mood, note) {
-    if (!notionSettings.apiKey || !notionSettings.dbId) return;
+    if (!notionSettings.apiKey || !notionSettings.dbId) return false;
     dateStr = (dateStr || '').replace(/^["']|["']$/g, '').trim();
     updateNotionStatus('syncing');
 
@@ -1422,9 +1272,11 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
         }
       }
       updateNotionStatus('connected');
+      return true;
     } catch(e) {
       console.error('Notion write error:', e);
       updateNotionStatus('error');
+      throw e;
     }
   }
 
@@ -1441,8 +1293,10 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       await notionRequest('PATCH', `/pages/${notionPageCache[dateStr]}`, { archived: true });
       delete notionPageCache[dateStr];
       savePageCache();
+      updateNotionStatus('connected');
     } catch(e) {
       console.error('Notion delete error:', e);
+      updateNotionStatus('error');
     }
   }
 
@@ -1459,10 +1313,11 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
   // ── 從 Notion 同步 ──
   async function syncFromNotion() {
+    const isEn = currentLang === 'en';
     if (!notionSettings.apiKey || !notionSettings.dbId) {
-      setSettingsMsg('請先設定 API Key 和 Database ID', true); return;
+      setSettingsMsg(isEn ? 'Please set up the API Key and Database ID first' : '請先設定 API Key 和 Database ID', true); return;
     }
-    setSettingsMsg('同步中...', false);
+    setSettingsMsg(isEn ? 'Syncing...' : '同步中...', false);
     updateNotionStatus('syncing');
 
     const moodMap = { '開心': 'happy', '各半': 'mixed', '不開心': 'sad', '沒感覺': 'neutral' };
@@ -1495,9 +1350,9 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       renderLog();
       loadTodayData();
       updateNotionStatus('connected');
-      setSettingsMsg(`✓ 同步完成，共 ${count} 筆`, false);
+      setSettingsMsg(isEn ? `✓ Sync complete, ${count} records` : `✓ 同步完成，共 ${count} 筆`, false);
     } catch(e) {
-      setSettingsMsg(`✗ 同步失敗：${e.message}`, true);
+      setSettingsMsg(isEn ? `✗ Sync failed: ${e.message}` : `✗ 同步失敗：${e.message}`, true);
       updateNotionStatus('error');
     }
   }
@@ -1527,7 +1382,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   }
 
   async function saveToday() {
-    if (!selectedMood) { alert('請先選擇今天的心情！'); return; }
+    const isEn = currentLang === 'en';
+    if (!selectedMood) { alert(isEn ? 'Please pick a colour for today first!' : '請先選擇今天的心情！'); return; }
     const note = document.getElementById('noteInput').value.trim();
     moodData[todayStr] = { mood: selectedMood, note };
     saveData();
@@ -1535,10 +1391,18 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     renderLog();
     renderStreak();
     const msg = document.getElementById('saveMsg');
-    msg.textContent = '儲存中...';
+    msg.textContent = isEn ? 'Saving...' : '儲存中...';
     msg.classList.add('show');
-    await writeToNotion(todayStr, selectedMood, note);
-    msg.textContent = notionSettings.apiKey ? '已儲存 + 同步 Notion ✓' : '已儲存 ✓';
+    let notionFailed = false;
+    if (notionSettings.apiKey) {
+      try { await writeToNotion(todayStr, selectedMood, note); }
+      catch (e) { notionFailed = true; }
+    }
+    msg.textContent = !notionSettings.apiKey
+      ? (isEn ? '✓ Saved' : '已儲存 ✓')
+      : notionFailed
+        ? (isEn ? '✓ Saved (Notion sync failed)' : '已儲存（Notion 同步失敗）')
+        : (isEn ? '✓ Saved + synced to Notion' : '已儲存 + 同步 Notion ✓');
     setTimeout(() => msg.classList.remove('show'), 2500);
     const _newBadges = checkAndUnlockBadges();
     if (_newBadges && _newBadges.length > 0) {
@@ -1558,7 +1422,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     const entry = moodData[dateStr];
     document.getElementById('modalDate').textContent = formatDisplay(dateStr);
     document.getElementById('modalNote').value = entry?.note || '';
-    document.getElementById('modalNotionHint').textContent = notionSettings.apiKey ? '· 會同步至 Notion' : '';
+    document.getElementById('modalNotionHint').textContent = notionSettings.apiKey ? (currentLang === 'en' ? '· syncs to Notion' : '· 會同步至 Notion') : '';
     if (entry?.mood) selectModalMoodUI(entry.mood);
     else ['happy','mixed','sad','neutral'].forEach(m => { document.getElementById(`mbtn-${m}`).className = 'modal-mood-btn'; });
     document.getElementById('modalOverlay').classList.add('show');
@@ -1575,8 +1439,9 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   }
 
   async function saveModal() {
-    if (!modalMood) { alert('請選擇心情！'); return; }
-    if (!modalDate) { alert('日期錯誤，請重新開啟'); return; }
+    const isEn = currentLang === 'en';
+    if (!modalMood) { alert(isEn ? 'Please pick a colour!' : '請選擇心情！'); return; }
+    if (!modalDate) { alert(isEn ? 'Invalid date, please reopen.' : '日期錯誤，請重新開啟'); return; }
     const note = document.getElementById('modalNote').value.trim();
     const savedDate = modalDate;
     const savedMood = modalMood;
@@ -1586,7 +1451,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     renderLog();
     renderStreak();
     closeModalDirect();
-    await writeToNotion(savedDate, savedMood, note);
+    try { await writeToNotion(savedDate, savedMood, note); } catch (e) {}
     const _newBadges = checkAndUnlockBadges();
     if (_newBadges && _newBadges.length > 0) {
       _newBadges.forEach(b => { if (b.type === 'month') setTimeout(() => showBadgeUnlocked(b.ym, b.y, b.m), 500); });
@@ -1606,14 +1471,15 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
   // ── 推送所有本地資料到 Notion ──
   async function pushAllToNotion() {
+    const isEn = currentLang === 'en';
     if (!notionSettings.apiKey || !notionSettings.dbId) {
-      setSettingsMsg('請先設定 API Key 和 Database ID', true); return;
+      setSettingsMsg(isEn ? 'Please set up the API Key and Database ID first' : '請先設定 API Key 和 Database ID', true); return;
     }
     const entries = Object.entries(moodData);
     if (entries.length === 0) {
-      setSettingsMsg('沒有本地資料可推送', true); return;
+      setSettingsMsg(isEn ? 'No local data to push' : '沒有本地資料可推送', true); return;
     }
-    setSettingsMsg(`推送中... 0/${entries.length}`, false);
+    setSettingsMsg(isEn ? `Pushing... 0/${entries.length}` : `推送中... 0/${entries.length}`, false);
     updateNotionStatus('syncing');
     let done = 0, failed = 0;
     for (const [dateStr, entry] of entries) {
@@ -1629,13 +1495,15 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       }
       if (!success) failed++;
       done++;
-      setSettingsMsg(`推送中... ${done}/${entries.length}${failed ? `（${failed} 筆失敗）` : ''}`, false);
+      setSettingsMsg(isEn
+        ? `Pushing... ${done}/${entries.length}${failed ? ` (${failed} failed)` : ''}`
+        : `推送中... ${done}/${entries.length}${failed ? `（${failed} 筆失敗）` : ''}`, false);
       await new Promise(r => setTimeout(r, 350));
     }
     updateNotionStatus(failed ? 'error' : 'connected');
     setSettingsMsg(failed
-      ? `推送完成，${entries.length - failed} 筆成功，${failed} 筆失敗`
-      : `✓ 推送完成！共 ${entries.length} 筆`, false);
+      ? (isEn ? `Push complete: ${entries.length - failed} succeeded, ${failed} failed` : `推送完成，${entries.length - failed} 筆成功，${failed} 筆失敗`)
+      : (isEn ? `✓ Push complete! ${entries.length} records` : `✓ 推送完成！共 ${entries.length} 筆`), false);
   }
 
 
@@ -1804,14 +1672,18 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     overlay.style.display = 'flex';
     const okBtn = document.getElementById('confirmOk');
     const cancelBtn = document.getElementById('confirmCancel');
+    okBtn.textContent = currentLang === 'en' ? 'OK' : '確定';
+    cancelBtn.textContent = currentLang === 'en' ? 'Cancel' : '取消';
+    cancelBtn.style.display = '';
     const cleanup = () => { overlay.style.display = 'none'; };
     okBtn.onclick = () => { cleanup(); if (onOk) onOk(); };
     cancelBtn.onclick = () => { cleanup(); if (onCancel) onCancel(); };
   }
 
   function exportData() {
+    const isEn = currentLang === 'en';
     const count = Object.keys(moodData).length;
-    if (count === 0) { showConfirm('還沒有任何紀錄可以匯出！', null, null); document.getElementById('confirmCancel').style.display='none'; return; }
+    if (count === 0) { showConfirm(isEn ? 'No records to export yet!' : '還沒有任何紀錄可以匯出！', null, null); document.getElementById('confirmCancel').style.display='none'; return; }
     const json = JSON.stringify(moodData, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const a = document.createElement('a');
@@ -1822,7 +1694,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
-    showConfirm(`✅ 已匯出 ${count} 筆紀錄！`, null, null); document.getElementById('confirmCancel').style.display='none';
+    showConfirm(isEn ? `✅ Exported ${count} records!` : `✅ 已匯出 ${count} 筆紀錄！`, null, null); document.getElementById('confirmCancel').style.display='none';
   }
 
   function importData() {
@@ -1830,6 +1702,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   }
 
   function handleImport(e) {
+    const isEn = currentLang === 'en';
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -1839,32 +1712,33 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
         const total = Object.keys(imported).length;
         const conflicts = Object.keys(imported).filter(d => moodData[d]);
         const newOnly = total - conflicts.length;
-        let overwrite = false;
 
         if (conflicts.length > 0) {
-          const msg = `匯入檔案共 ${total} 筆紀錄\n新增 ${newOnly} 筆（不衝突）\n衝突 ${conflicts.length} 筆（已有紀錄）\n\n確定 → 全部覆蓋\n取消 → 只匯入新的`;
+          const msg = isEn
+            ? `Import file has ${total} records\n${newOnly} new (no conflict)\n${conflicts.length} conflict (already recorded)\n\nOK → overwrite all\nCancel → import new only`
+            : `匯入檔案共 ${total} 筆紀錄\n新增 ${newOnly} 筆（不衝突）\n衝突 ${conflicts.length} 筆（已有紀錄）\n\n確定 → 全部覆蓋\n取消 → 只匯入新的`;
           showConfirm(msg,
             () => {
               Object.assign(moodData, imported);
               saveData(); renderGrid(); renderLog();
-              showConfirm(`✅ 匯入完成！共覆蓋 ${total} 筆紀錄。`, null, null);
+              showConfirm(isEn ? `✅ Import complete! ${total} records overwritten.` : `✅ 匯入完成！共覆蓋 ${total} 筆紀錄。`, null, null);
               document.getElementById('confirmCancel').style.display = 'none';
             },
             () => {
               Object.keys(imported).forEach(d => { if (!moodData[d]) moodData[d] = imported[d]; });
               saveData(); renderGrid(); renderLog();
-              showConfirm(`✅ 匯入完成！新增 ${newOnly} 筆紀錄。`, null, null);
+              showConfirm(isEn ? `✅ Import complete! ${newOnly} records added.` : `✅ 匯入完成！新增 ${newOnly} 筆紀錄。`, null, null);
               document.getElementById('confirmCancel').style.display = 'none';
             }
           );
         } else {
           Object.assign(moodData, imported);
           saveData(); renderGrid(); renderLog();
-          showConfirm(`✅ 匯入完成！共新增 ${total} 筆紀錄。`, null, null);
+          showConfirm(isEn ? `✅ Import complete! ${total} records added.` : `✅ 匯入完成！共新增 ${total} 筆紀錄。`, null, null);
           document.getElementById('confirmCancel').style.display = 'none';
         }
       } catch(err) {
-        showConfirm('匯入失敗，請確認是正確的 JSON 檔案。', null, null); document.getElementById('confirmCancel').style.display='none';
+        showConfirm(isEn ? 'Import failed, please check this is a valid JSON file.' : '匯入失敗，請確認是正確的 JSON 檔案。', null, null); document.getElementById('confirmCancel').style.display='none';
       }
       e.target.value = '';
     };
@@ -1881,6 +1755,9 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     // show/hide chart toggle button
     const btn = document.getElementById('chartToggleBtn');
     if (btn) btn.style.display = (view === 'quarter' || view === 'year') ? 'inline-block' : 'none';
+    // show/hide year review button
+    const wrapBtn = document.getElementById('yearReviewBtn');
+    if (wrapBtn) wrapBtn.style.display = (view === 'year') ? 'inline-block' : 'none';
     // disable chart mode for week/month
     if ((view === 'week' || view === 'month') && chartMode) {
       chartMode = false;
@@ -2289,7 +2166,7 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
   loadSettings();
   const BLESSING_CARDS_ZH = ["自我察覺，不是場對錯的競賽，只是單純意識到，原來這一個的自己，是這個樣子", "不開心的存在，是讓我們能看見開心的樣貌，也讓我們知道有哪些，是未來想選擇不重複的", "意識到自己不喜歡的自己，需要勇氣。願意承認並接受各種樣貌的自己，更是一場包容練習", "慣性能被持續，是因為我們總能從中得到什麼，所以要讓慣性產生變動，或許要先問的是我願意放棄它所帶來的好嗎？", "想重複裡得到不同的結果，那就起身去，把重複切成絲，試著尋找能夠改變的那一條絲", "練習把那些自己能做不同選擇的能力拿回來吧！或許會發現，原來每件事都擁有更多的可能", "如果做不到全然相信，宇宙的早已安排，\n那就讓我們一起練習，讓自己不後悔每個當下的選擇"];
   const BLESSING_CARDS_EN = ["No matter what you notice through self-awareness, there is no right or wrong. It's simply a way of seeing — this is a part of who I am.", "Negative feelings are actually a gift. They show us what happiness looks like, and remind us what we'd rather not carry into the future.", "Realising the parts of ourselves we don't like takes courage. Being willing to see and accept every side of who we are — that's a practice of tolerance.", "The reason a habit keeps going is because we always get something from it. So if we want it to change, perhaps the real question to ask first is: am I willing to give up what it brings to me?", "If you want something different from a pattern that you keep repeating, take action to break it. Look for a tiny, simple part where we could make a small change.", "Why not reclaim the power to make your own choices — just for yourself? Once you start, you might find there are far more possibilities than you thought.", "If it's hard to fully trust that the universe has it all planned out, perhaps we could practise something simpler together: making each choice in a way we won't regret, and start from this moment."];
-  var currentLang = (typeof localStorage !== "undefined" ? localStorage.getItem("moodLang") : null) || "zh";
+  let currentLang;
   let BLESSING_CARDS = BLESSING_CARDS_ZH;
 
   const LANG_ZH = {
@@ -2980,6 +2857,191 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     document.getElementById('blessingOverlay').style.display = 'none';
   }
 
+  // --- 年度回顧 ---
+  function closeYearReview(e) {
+    if (e && e.target !== document.getElementById('yearReviewOverlay')) return;
+    document.getElementById('yearReviewOverlay').style.display = 'none';
+  }
+
+  function closeYearReviewDirect() {
+    document.getElementById('yearReviewOverlay').style.display = 'none';
+  }
+
+  function calcLongestStreakInRange(startStr, endStr) {
+    let longest = 0, cur = 0;
+    const d = new Date(startStr + 'T00:00:00');
+    const end = new Date(endStr + 'T00:00:00');
+    while (d <= end) {
+      const ds = formatDate(d);
+      if (moodData[ds]) { cur++; if (cur > longest) longest = cur; }
+      else cur = 0;
+      d.setDate(d.getDate() + 1);
+    }
+    return longest;
+  }
+
+  let _yearReviewCanvas = null;
+
+  async function openYearReview() {
+    const year = new Date().getFullYear() + viewOffset;
+    const { startStr, endStr } = getLogRange();
+    const entries = Object.entries(moodData).filter(([d]) => d >= startStr && d <= endStr);
+    const total = entries.length;
+    if (total === 0) {
+      alert(currentLang === 'en' ? `No records for ${year} yet!` : `${year} 年還沒有任何紀錄！`);
+      return;
+    }
+    const counts = { happy: 0, mixed: 0, sad: 0, neutral: 0 };
+    entries.forEach(([, v]) => { if (counts[v.mood] !== undefined) counts[v.mood]++; });
+    const longest = calcLongestStreakInRange(startStr, endStr);
+
+    const wrap = document.getElementById('yearReviewCanvasWrap');
+    wrap.innerHTML = '';
+    const saveBtn = document.getElementById('yearReviewSaveBtn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = currentLang === 'en' ? 'Loading…' : '準備中…'; }
+    document.getElementById('yearReviewOverlay').style.display = 'flex';
+
+    _yearReviewCanvas = await drawYearReviewCanvas(year, total, counts, longest);
+    _yearReviewCanvas.style.width = '100%';
+    _yearReviewCanvas.style.height = 'auto';
+    _yearReviewCanvas.style.display = 'block';
+    wrap.appendChild(_yearReviewCanvas);
+
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = currentLang === 'en' ? '↓ Share / Save' : '↓ 分享 / 下載'; }
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  async function drawYearReviewCanvas(year, total, counts, longest) {
+    const isEn = currentLang === 'en';
+    const W = 1080, H = 1350;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#F3EEE8';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.strokeStyle = 'rgba(77,88,111,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= W; x += 54) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = 0; y <= H; y += 54) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    ctx.fillStyle = 'rgba(77,88,111,0.3)';
+    ctx.font = '22px "Noto Sans TC", "PingFang TC", sans-serif';
+    ctx.textBaseline = 'top';
+    const title = isEn ? 'YEAR IN COLOUR.' : '這一年的顏色.';
+    ctx.fillText(title, (W - ctx.measureText(title).width) / 2, 100);
+
+    ctx.strokeStyle = 'rgba(77,88,111,0.14)';
+    ctx.beginPath(); ctx.moveTo(108, 146); ctx.lineTo(W-108, 146); ctx.stroke();
+
+    ctx.fillStyle = '#4D586F';
+    ctx.font = '96px "Sulphur Point", sans-serif';
+    ctx.textBaseline = 'top';
+    const yearStr = String(year);
+    ctx.fillText(yearStr, (W - ctx.measureText(yearStr).width) / 2, 190);
+
+    ctx.font = '28px "Noto Sans TC", "PingFang TC", sans-serif';
+    ctx.fillStyle = 'rgba(77,88,111,0.7)';
+    const totalLine = isEn ? `${total} days coloured` : `一共上色了 ${total} 天`;
+    ctx.fillText(totalLine, (W - ctx.measureText(totalLine).width) / 2, 330);
+
+    const MOODS = ['happy','mixed','sad','neutral'];
+    const COLORS = { happy:'#F6CE83', mixed:'#D39266', sad:'#C06145', neutral:'#9F9F9F' };
+    const NAMES = isEn
+      ? { happy:'Happy', mixed:'Half', sad:'Sad', neutral:'Blank' }
+      : { happy:'開心', mixed:'各半', sad:'不開心', neutral:'沒感覺' };
+
+    const barLeft = 108, barMaxW = W - 216, barH = 34, barTop = 440, barGap = 76;
+    MOODS.forEach((m, i) => {
+      const y = barTop + i * barGap;
+      const pct = counts[m] / total;
+
+      ctx.fillStyle = '#4D586F';
+      ctx.font = '22px "Sulphur Point", sans-serif';
+      ctx.textBaseline = 'bottom';
+      const label = `${NAMES[m]}  ${counts[m]}${isEn ? 'd' : '天'} · ${Math.round(pct*100)}%`;
+      ctx.fillText(label, barLeft, y - 12);
+
+      ctx.fillStyle = 'rgba(77,88,111,0.08)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(barLeft, y, barMaxW, barH, barH/2); else ctx.rect(barLeft, y, barMaxW, barH);
+      ctx.fill();
+
+      if (pct > 0) {
+        ctx.fillStyle = COLORS[m];
+        const fillW = Math.max(barH, barMaxW * pct);
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(barLeft, y, fillW, barH, barH/2); else ctx.rect(barLeft, y, fillW, barH);
+        ctx.fill();
+      }
+    });
+
+    const streakY = barTop + MOODS.length * barGap + 30;
+    ctx.strokeStyle = 'rgba(77,88,111,0.14)';
+    ctx.beginPath(); ctx.moveTo(108, streakY-30); ctx.lineTo(W-108, streakY-30); ctx.stroke();
+    ctx.fillStyle = '#4D586F';
+    ctx.font = '30px "Noto Sans TC", "PingFang TC", sans-serif';
+    ctx.textBaseline = 'top';
+    const streakLine = isEn ? `Longest streak: ${longest} days` : `最長連續紀錄 ${longest} 天`;
+    ctx.fillText(streakLine, (W - ctx.measureText(streakLine).width) / 2, streakY);
+
+    const BRAND_Y = H - 90;
+    const ICON_SIZE = 64;
+    const ICON_Y = BRAND_Y - 76;
+    ctx.strokeStyle = 'rgba(77,88,111,0.1)';
+    ctx.beginPath(); ctx.moveTo(108, ICON_Y - ICON_SIZE/2 - 20); ctx.lineTo(W-108, ICON_Y - ICON_SIZE/2 - 20); ctx.stroke();
+
+    try {
+      const icon = await loadImage('./icon.png');
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(W/2, ICON_Y, ICON_SIZE/2, 0, Math.PI*2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(icon, W/2 - ICON_SIZE/2, ICON_Y - ICON_SIZE/2, ICON_SIZE, ICON_SIZE);
+      ctx.restore();
+    } catch (e) {
+      ctx.fillStyle = 'rgba(77,88,111,0.18)';
+      ctx.beginPath(); ctx.arc(W/2, ICON_Y, 3, 0, Math.PI*2); ctx.fill();
+    }
+
+    ctx.fillStyle = 'rgba(77,88,111,0.28)';
+    ctx.font = '22px "Noto Sans TC", "PingFang TC", sans-serif';
+    ctx.textBaseline = 'middle';
+    const brand = 'Triple.Cell_illustration  ·  細胞日常';
+    ctx.fillText(brand, (W - ctx.measureText(brand).width) / 2, BRAND_Y);
+
+    return canvas;
+  }
+
+  async function saveYearReviewAsImage() {
+    if (!_yearReviewCanvas) return;
+    const btn = document.getElementById('yearReviewSaveBtn');
+    const origText = btn ? btn.textContent : '';
+    if (btn) btn.textContent = currentLang === 'en' ? 'Working…' : '處理中…';
+    try {
+      const filename = 'year-in-colour-' + new Date().toISOString().slice(0,10) + '.png';
+      await shareOrDownloadCanvas(_yearReviewCanvas, filename,
+        currentLang === 'en' ? 'Year in Colour' : '這一年的顏色',
+        currentLang === 'en' ? 'My year, coloured.' : '這一年，我這樣上色。');
+      if (btn) btn.textContent = currentLang === 'en' ? '✓ Saved' : '✓ 已儲存';
+    } catch (e) {
+      console.error(e);
+      if (btn) btn.textContent = origText;
+      alert(currentLang === 'en' ? 'Save failed, please screenshot instead 🙏' : '儲存失敗，請截圖代替 🙏');
+      return;
+    }
+    setTimeout(() => { if (btn) btn.textContent = origText; }, 2000);
+  }
 
   function calcTotalDays() {
     return Object.keys(moodData).length;
@@ -2991,11 +3053,34 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     const txt = document.getElementById('streakText');
     if (!el || !txt) return;
     if (total >= 1) {
-      txt.textContent = `✦ 已經上色了 ${total} 天 ✦`;
+      txt.textContent = (typeof getLang === 'function' ? getLang().streakText(total) : `✦ 已經上色了 ${total} 天 ✦`);
       el.style.display = 'block';
     } else {
       el.style.display = 'none';
     }
+  }
+
+  // 有原生分享（手機）就分享圖片檔，沒有就退回原本的下載
+  async function shareOrDownloadCanvas(canvas, filename, shareTitle, shareText) {
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) return false;
+
+    const file = new File([blob], filename, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: shareTitle, text: shareText });
+        return true;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return true;
+      }
+    }
+
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+    return true;
   }
 
   async function saveCardAsImage() {
@@ -3108,11 +3193,11 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       const brandW = ctx.measureText(brand).width;
       ctx.fillText(brand, (W - brandW) / 2, BRAND_Y);
 
-      // Download
-      const link = document.createElement('a');
-      link.download = 'colour-of-your-day-' + new Date().toISOString().slice(0,10) + '.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      // Share（手機有支援才用）／Download
+      const filename = 'colour-of-your-day-' + new Date().toISOString().slice(0,10) + '.png';
+      await shareOrDownloadCanvas(canvas, filename,
+        currentLang === 'en' ? 'The Colour of Your Day' : '今天的心情顏色',
+        text);
       if (btn) btn.textContent = currentLang === 'en' ? '✓ Saved' : '✓ 已儲存';
       setTimeout(() => { if (btn) btn.textContent = origText; }, 2000);
 
@@ -3381,6 +3466,24 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     if (langBtn) langBtn.textContent = currentLang === 'zh' ? 'EN' : '中';
     // blessing cards
     BLESSING_CARDS = L.blessingCards;
+
+    // Notion settings panel
+    const isEnNotion = currentLang === 'en';
+    const settingsTitleText = document.getElementById('settingsTitleText');
+    if (settingsTitleText) settingsTitleText.textContent = isEnNotion ? 'Notion Settings' : 'Notion 設定';
+    const settingsSaveBtn = document.getElementById('settingsSaveBtn');
+    if (settingsSaveBtn) settingsSaveBtn.textContent = isEnNotion ? 'Save Settings' : '儲存設定';
+    const settingsTestBtn = document.getElementById('settingsTestBtn');
+    if (settingsTestBtn) settingsTestBtn.textContent = isEnNotion ? 'Test Connection' : '測試連線';
+    const settingsSyncFromBtn = document.getElementById('settingsSyncFromBtn');
+    if (settingsSyncFromBtn) settingsSyncFromBtn.textContent = isEnNotion ? '⇄ Sync from Notion' : '⇄ 從 Notion 同步';
+    const settingsPushAllBtn = document.getElementById('settingsPushAllBtn');
+    if (settingsPushAllBtn) settingsPushAllBtn.textContent = isEnNotion ? '↑ Push all to Notion' : '↑ 推送全部到 Notion';
+    const settingsNote = document.getElementById('settingsNote');
+    if (settingsNote) settingsNote.innerHTML = isEnNotion
+      ? '① Go to notion.so/my-integrations, create an Integration, and copy the API Key<br>② On your Notion database page, top right → ··· → Connect to integration<br>③ The database needs these properties: <strong>Date</strong> (date), <strong>Mood</strong> (select), <strong>Note</strong> (text), <strong>Name</strong> (title)<br>④ The API Key is only stored in your browser\'s localStorage, never uploaded to any server'
+      : '① 前往 notion.so/my-integrations 建立 Integration，複製 API Key<br>② 在 Notion 資料庫頁面右上角 → ··· → 連結至整合<br>③ 資料庫欄位需包含：<strong>Date</strong>（日期）、<strong>Mood</strong>（選擇）、<strong>Note</strong>（文字）、<strong>Name</strong>（標題）<br>④ API Key 只儲存在你的瀏覽器 localStorage，不會上傳到任何伺服器';
+    updateNotionStatus('idle');
   }
 
   function toggleLang() {
