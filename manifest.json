@@ -1,0 +1,26 @@
+{
+  "name": "The Colour of Your Day",
+  "short_name": "細胞日常",
+  "description": "Record today's mood with a colour, and sync it to Notion.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F3EEE8",
+  "theme_color": "#F3EEE8",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
