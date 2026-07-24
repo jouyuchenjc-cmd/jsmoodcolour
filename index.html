@@ -1000,7 +1000,7 @@
 
   <!-- 年度回顧 Modal -->
   <div id="yearReviewOverlay" onclick="closeYearReview(event)" style="display:none;position:fixed;inset:0;background:rgba(60,55,48,0.45);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:24px;">
-    <div id="yearReviewCard" style="background:#F3EEE8;border-radius:24px;width:100%;max-width:320px;overflow:hidden;box-shadow:0 8px 40px rgba(60,55,48,0.18);display:flex;flex-direction:column;animation:blessingFadeIn 0.3s ease;position:relative;">
+    <div id="yearReviewCard" style="background:#F3EEE8;border-radius:24px;width:100%;max-width:380px;overflow:hidden;box-shadow:0 8px 40px rgba(60,55,48,0.18);display:flex;flex-direction:column;animation:blessingFadeIn 0.3s ease;position:relative;">
       <button onclick="closeYearReviewDirect()" style="position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;border:none;background:#8e8e8e;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;z-index:10;" onmouseenter="this.style.background='#707070'" onmouseleave="this.style.background='#8e8e8e'">✕</button>
       <div id="yearReviewCanvasWrap" style="width:100%;background:#F3EEE8;"></div>
       <div style="padding:20px 28px 24px;">
@@ -2921,7 +2921,8 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
 
   async function drawYearReviewCanvas(year, total, counts, longest) {
     const isEn = currentLang === 'en';
-    const W = 1080, H = 1350;
+    const W = 1080, H = 1380;
+    const CX = W / 2;
     const canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
@@ -2934,25 +2935,39 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     for (let x = 0; x <= W; x += 54) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
     for (let y = 0; y <= H; y += 54) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
 
+    // Icon — top of card
+    const ICON_Y = 110, ICON_R = 55;
+    try {
+      const icon = await loadImage('./icon.png');
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(CX, ICON_Y, ICON_R, 0, Math.PI*2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(icon, CX - ICON_R, ICON_Y - ICON_R, ICON_R*2, ICON_R*2);
+      ctx.restore();
+    } catch (e) {
+      ctx.fillStyle = 'rgba(77,88,111,0.18)';
+      ctx.beginPath(); ctx.arc(CX, ICON_Y, 6, 0, Math.PI*2); ctx.fill();
+    }
+
+    const DIV1_Y = ICON_Y + ICON_R + 35;
+    ctx.strokeStyle = 'rgba(77,88,111,0.14)';
+    ctx.beginPath(); ctx.moveTo(108, DIV1_Y); ctx.lineTo(W-108, DIV1_Y); ctx.stroke();
+
     ctx.fillStyle = 'rgba(77,88,111,0.3)';
-    ctx.font = '22px "Noto Sans TC", "PingFang TC", sans-serif';
+    ctx.font = '28px "Noto Sans TC", "PingFang TC", sans-serif';
     ctx.textBaseline = 'top';
     const title = isEn ? 'YEAR IN COLOUR.' : '這一年的顏色.';
-    ctx.fillText(title, (W - ctx.measureText(title).width) / 2, 100);
-
-    ctx.strokeStyle = 'rgba(77,88,111,0.14)';
-    ctx.beginPath(); ctx.moveTo(108, 146); ctx.lineTo(W-108, 146); ctx.stroke();
+    const TITLE_Y = DIV1_Y + 32;
+    ctx.fillText(title, (W - ctx.measureText(title).width) / 2, TITLE_Y);
 
     ctx.fillStyle = '#4D586F';
-    ctx.font = '96px "Sulphur Point", sans-serif';
+    ctx.font = '90px "Sulphur Point", sans-serif';
     ctx.textBaseline = 'top';
     const yearStr = String(year);
-    ctx.fillText(yearStr, (W - ctx.measureText(yearStr).width) / 2, 190);
-
-    ctx.font = '28px "Noto Sans TC", "PingFang TC", sans-serif';
-    ctx.fillStyle = 'rgba(77,88,111,0.7)';
-    const totalLine = isEn ? `${total} days coloured` : `一共上色了 ${total} 天`;
-    ctx.fillText(totalLine, (W - ctx.measureText(totalLine).width) / 2, 330);
+    const YEAR_Y = TITLE_Y + 62;
+    ctx.fillText(yearStr, (W - ctx.measureText(yearStr).width) / 2, YEAR_Y);
 
     const MOODS = ['happy','mixed','sad','neutral'];
     const COLORS = { happy:'#F6CE83', mixed:'#D39266', sad:'#C06145', neutral:'#9F9F9F' };
@@ -2960,65 +2975,80 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
       ? { happy:'Happy', mixed:'Half', sad:'Sad', neutral:'Blank' }
       : { happy:'開心', mixed:'各半', sad:'不開心', neutral:'沒感覺' };
 
-    const barLeft = 108, barMaxW = W - 216, barH = 34, barTop = 440, barGap = 76;
-    MOODS.forEach((m, i) => {
-      const y = barTop + i * barGap;
+    // Donut chart
+    const DONUT_R = 165, DONUT_HOLE_R = 98;
+    const DONUT_CY = YEAR_Y + 90 + 40 + DONUT_R;
+    let angle = -Math.PI / 2;
+    MOODS.forEach(m => {
       const pct = counts[m] / total;
-
-      ctx.fillStyle = '#4D586F';
-      ctx.font = '22px "Sulphur Point", sans-serif';
-      ctx.textBaseline = 'bottom';
-      const label = `${NAMES[m]}  ${counts[m]}${isEn ? 'd' : '天'} · ${Math.round(pct*100)}%`;
-      ctx.fillText(label, barLeft, y - 12);
-
-      ctx.fillStyle = 'rgba(77,88,111,0.08)';
+      if (pct <= 0) return;
+      const sweep = pct * Math.PI * 2;
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(barLeft, y, barMaxW, barH, barH/2); else ctx.rect(barLeft, y, barMaxW, barH);
+      ctx.moveTo(CX, DONUT_CY);
+      ctx.arc(CX, DONUT_CY, DONUT_R, angle, angle + sweep);
+      ctx.closePath();
+      ctx.fillStyle = COLORS[m];
       ctx.fill();
+      angle += sweep;
+    });
+    ctx.fillStyle = '#F3EEE8';
+    ctx.beginPath(); ctx.arc(CX, DONUT_CY, DONUT_HOLE_R, 0, Math.PI*2); ctx.fill();
 
-      if (pct > 0) {
-        ctx.fillStyle = COLORS[m];
-        const fillW = Math.max(barH, barMaxW * pct);
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(barLeft, y, fillW, barH, barH/2); else ctx.rect(barLeft, y, fillW, barH);
-        ctx.fill();
-      }
+    ctx.fillStyle = '#4D586F';
+    ctx.font = '70px "Sulphur Point", sans-serif';
+    ctx.textBaseline = 'middle';
+    const totalStr = String(total);
+    ctx.fillText(totalStr, CX - ctx.measureText(totalStr).width / 2, DONUT_CY - 20);
+    ctx.font = '26px "Noto Sans TC", "PingFang TC", sans-serif';
+    ctx.fillStyle = 'rgba(77,88,111,0.6)';
+    const totalLabel = isEn ? 'days coloured' : '天上色';
+    ctx.fillText(totalLabel, CX - ctx.measureText(totalLabel).width / 2, DONUT_CY + 34);
+
+    // Legend
+    const LEGEND_TOP = DONUT_CY + DONUT_R + 60;
+    const LEGEND_ROW_H = 66;
+    ctx.textBaseline = 'middle';
+    MOODS.forEach((m, i) => {
+      const y = LEGEND_TOP + i * LEGEND_ROW_H;
+      const pct = counts[m] / total;
+      const label = `${NAMES[m]}   ${counts[m]}${isEn ? 'd' : '天'} · ${Math.round(pct*100)}%`;
+      ctx.font = '34px "Sulphur Point", sans-serif';
+      const textW = ctx.measureText(label).width;
+      const dotR = 10, gap = 16;
+      const rowW = dotR*2 + gap + textW;
+      const startX = CX - rowW / 2;
+      ctx.fillStyle = COLORS[m];
+      ctx.beginPath(); ctx.arc(startX + dotR, y, dotR, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#4D586F';
+      ctx.fillText(label, startX + dotR*2 + gap, y);
     });
 
-    const streakY = barTop + MOODS.length * barGap + 30;
+    // Longest streak
+    const STREAK_DIV_Y = LEGEND_TOP + MOODS.length * LEGEND_ROW_H + 22;
     ctx.strokeStyle = 'rgba(77,88,111,0.14)';
-    ctx.beginPath(); ctx.moveTo(108, streakY-30); ctx.lineTo(W-108, streakY-30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(108, STREAK_DIV_Y); ctx.lineTo(W-108, STREAK_DIV_Y); ctx.stroke();
     ctx.fillStyle = '#4D586F';
-    ctx.font = '30px "Noto Sans TC", "PingFang TC", sans-serif';
+    ctx.font = '34px "Noto Sans TC", "PingFang TC", sans-serif';
     ctx.textBaseline = 'top';
     const streakLine = isEn ? `Longest streak: ${longest} days` : `最長連續紀錄 ${longest} 天`;
-    ctx.fillText(streakLine, (W - ctx.measureText(streakLine).width) / 2, streakY);
+    const STREAK_Y = STREAK_DIV_Y + 34;
+    ctx.fillText(streakLine, (W - ctx.measureText(streakLine).width) / 2, STREAK_Y);
 
-    const BRAND_Y = H - 90;
-    const ICON_SIZE = 64;
-    const ICON_Y = BRAND_Y - 76;
+    // Brand footer
+    const FOOTER_DIV_Y = STREAK_Y + 34 + 44;
     ctx.strokeStyle = 'rgba(77,88,111,0.1)';
-    ctx.beginPath(); ctx.moveTo(108, ICON_Y - ICON_SIZE/2 - 20); ctx.lineTo(W-108, ICON_Y - ICON_SIZE/2 - 20); ctx.stroke();
-
-    try {
-      const icon = await loadImage('./icon.png');
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(W/2, ICON_Y, ICON_SIZE/2, 0, Math.PI*2);
-      ctx.closePath();
-      ctx.clip();
-      ctx.drawImage(icon, W/2 - ICON_SIZE/2, ICON_Y - ICON_SIZE/2, ICON_SIZE, ICON_SIZE);
-      ctx.restore();
-    } catch (e) {
-      ctx.fillStyle = 'rgba(77,88,111,0.18)';
-      ctx.beginPath(); ctx.arc(W/2, ICON_Y, 3, 0, Math.PI*2); ctx.fill();
-    }
-
-    ctx.fillStyle = 'rgba(77,88,111,0.28)';
-    ctx.font = '22px "Noto Sans TC", "PingFang TC", sans-serif';
+    ctx.beginPath(); ctx.moveTo(108, FOOTER_DIV_Y); ctx.lineTo(W-108, FOOTER_DIV_Y); ctx.stroke();
     ctx.textBaseline = 'middle';
-    const brand = 'Triple.Cell_illustration  ·  細胞日常';
-    ctx.fillText(brand, (W - ctx.measureText(brand).width) / 2, BRAND_Y);
+    ctx.fillStyle = 'rgba(77,88,111,0.28)';
+    ctx.font = '27px "Noto Sans TC", "PingFang TC", sans-serif';
+    const brand1 = 'Triple.Cell_illustration  ·  細胞日常';
+    const BRAND1_Y = FOOTER_DIV_Y + 42;
+    ctx.fillText(brand1, (W - ctx.measureText(brand1).width) / 2, BRAND1_Y);
+    ctx.fillStyle = 'rgba(77,88,111,0.22)';
+    ctx.font = '22px "Noto Sans TC", "PingFang TC", sans-serif';
+    const brand2 = 'Lurn Creative Ltd.  渝澪創意有限公司';
+    const BRAND2_Y = BRAND1_Y + 40;
+    ctx.fillText(brand2, (W - ctx.measureText(brand2).width) / 2, BRAND2_Y);
 
     return canvas;
   }
@@ -3800,8 +3830,9 @@ const NOTION_PROXY = 'https://jsmoodcollection.jouyu-chen-jc.workers.dev/notion/
     document.getElementById('badgesOverlay').style.display = 'none';
   }
   </script>
-  <div style="text-align:center;padding:28px 0 20px;font-family:'Sulphur Point',sans-serif;font-size:11px;color:#8e8e8e;letter-spacing:0.08em;">
-    © 2026 Triple.Cell_illustration — 細胞日常插畫
+  <div style="text-align:center;padding:28px 0 20px;font-family:'Sulphur Point',sans-serif;font-size:11px;color:#8e8e8e;letter-spacing:0.08em;line-height:1.8;">
+    © 2026 Triple.Cell_illustration — 細胞日常插畫<br>
+    Lurn Creative Ltd.  渝澪創意有限公司
   </div>
 
 <!-- 徽章頁 -->
